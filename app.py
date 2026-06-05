@@ -39,7 +39,8 @@ BARRIOS_LIBERIA = [
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(180), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(180), unique=True, nullable=True)
     phone = db.Column(db.String(30), nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='leader') # admin, leader, member-reserved
@@ -152,6 +153,27 @@ def random_password():
     alphabet = string.ascii_letters + string.digits
     return 'Hosanna-' + ''.join(secrets.choice(alphabet) for _ in range(7))
 
+
+
+def slug_username(value):
+    value = (value or '').strip().lower()
+    replacements = {'á':'a','é':'e','í':'i','ó':'o','ú':'u','ñ':'n'}
+    for a,b in replacements.items():
+        value = value.replace(a,b)
+    value = re.sub(r'[^a-z0-9._-]+', '.', value)
+    value = re.sub(r'\.+', '.', value).strip('.')
+    return value[:40] or 'lider'
+
+def unique_username(base):
+    base = slug_username(base)
+    candidate = base
+    i = 2
+    while User.query.filter_by(username=candidate).first():
+        suffix = str(i)
+        candidate = (base[: max(1, 80-len(suffix))] + suffix)
+        i += 1
+    return candidate
+
 def send_sms(to, body):
     sid = os.getenv('TWILIO_ACCOUNT_SID')
     token = os.getenv('TWILIO_AUTH_TOKEN')
@@ -206,9 +228,9 @@ def api_nearby():
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
-        email = (request.form.get('email') or '').lower().strip()
+        username = (request.form.get('username') or '').lower().strip()
         password = request.form.get('password') or ''
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(username=username).first()
         if not user or not user.active or not user.check_password(password):
             flash('Credenciales incorrectas o usuario inactivo.', 'danger')
             return redirect(url_for('login'))
@@ -300,19 +322,22 @@ def admin_cell_delete(cell_id):
 def admin_leaders():
     generated = None
     if request.method == 'POST':
-        name=request.form.get('name','').strip(); email=request.form.get('email','').lower().strip(); phone=request.form.get('phone','').strip()
+        name=request.form.get('name','').strip(); username=(request.form.get('username') or '').lower().strip(); email=(request.form.get('email') or '').lower().strip() or None; phone=request.form.get('phone','').strip()
         password=request.form.get('password') or random_password()
-        if not name or not email:
-            flash('Nombre y correo son obligatorios.', 'danger'); return redirect(url_for('admin_leaders'))
-        if User.query.filter_by(email=email).first():
+        if not name:
+            flash('Nombre es obligatorio.', 'danger'); return redirect(url_for('admin_leaders'))
+        username = slug_username(username) if username else unique_username(name)
+        if User.query.filter_by(username=username).first():
+            flash('Ya existe un líder con ese nombre de usuario.', 'danger'); return redirect(url_for('admin_leaders'))
+        if email and User.query.filter_by(email=email).first():
             flash('Ya existe un usuario con ese correo.', 'danger'); return redirect(url_for('admin_leaders'))
-        u=User(name=name,email=email,phone=phone,role='leader',active=True); u.set_password(password); db.session.add(u); db.session.commit()
+        u=User(name=name,username=username,email=email,phone=phone,role='leader',active=True); u.set_password(password); db.session.add(u); db.session.commit()
         login_link = APP_PUBLIC_URL + url_for('login')
-        body=f'Hola {name}. Bienvenido al equipo de líderes de Iglesia Hosanna. Acceso: {login_link} Usuario: {email} Contraseña: {password}'
+        body=f'Hola {name}. Bienvenido al equipo de líderes de Iglesia Hosanna. Acceso: {login_link} Usuario: {username} Contraseña: {password}'
         sent=False; sms_msg=''
         if request.form.get('send_sms') == 'on' and phone:
             sent, sms_msg = send_sms(phone, body); flash(sms_msg, 'success' if sent else 'warning')
-        generated={'name':name,'email':email,'password':password,'phone':phone,'body':body,'sent':sent}
+        generated={'name':name,'username':username,'email':email,'password':password,'phone':phone,'body':body,'sent':sent}
         flash('Líder creado correctamente.', 'success')
     return render_template('admin/leaders.html', leaders=User.query.filter_by(role='leader').order_by(User.created_at.desc()).all(), generated=generated)
 
@@ -375,15 +400,61 @@ def upgrade_db():
 
 @app.cli.command('seed')
 def seed():
-    if not User.query.filter_by(email='admin@hosanna.local').first():
-        admin=User(name='Administrador Hosanna',email='admin@hosanna.local',role='admin',active=True,phone='')
+    if not User.query.filter_by(username='admin').first():
+        admin=User(name='Administrador Hosanna',username='admin',email='admin@hosanna.local',role='admin',active=True,phone='')
         admin.set_password('admin123'); db.session.add(admin)
-    if not User.query.filter_by(email='lider@hosanna.local').first():
-        leader=User(name='Líder Demo',email='lider@hosanna.local',role='leader',active=True,phone='88888888')
+    if not User.query.filter_by(username='liderdemo').first():
+        leader=User(name='Líder Demo',username='liderdemo',email='lider@hosanna.local',role='leader',active=True,phone='88888888')
         leader.set_password('lider123'); db.session.add(leader); db.session.flush()
         cell=Cell(name='Célula Demo Nazareth',leader_id=leader.id,barrio='Nazareth',address='Liberia, Guanacaste',day='Miércoles',time='19:00',phone='88888888',description='Grupo familiar de prueba.',latitude=10.6350,longitude=-85.4377,status='active')
         cell.google_maps_url=maps_url(cell.latitude,cell.longitude); cell.waze_url=waze_url(cell.latitude,cell.longitude); db.session.add(cell)
     db.session.commit(); print('Datos iniciales creados.')
+
+
+@app.cli.command('migrate-usernames')
+def migrate_usernames():
+    """Actualiza bases existentes: agrega username y hace email opcional."""
+    from sqlalchemy import text
+    engine_name = db.engine.url.get_backend_name()
+    with db.engine.begin() as conn:
+        if engine_name.startswith('postgresql'):
+            conn.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS username VARCHAR(80)'))
+            rows = conn.execute(text('SELECT id, name, email, username FROM "user" ORDER BY id')).mappings().all()
+            used = set()
+            existing = conn.execute(text('SELECT username FROM "user" WHERE username IS NOT NULL')).scalars().all()
+            used.update([x for x in existing if x])
+            for row in rows:
+                if row['username']:
+                    continue
+                base = slug_username((row['email'] or '').split('@')[0] or row['name'] or f'user{row["id"]}')
+                candidate = base
+                i = 2
+                while candidate in used:
+                    candidate = f'{base}{i}'[:80]
+                    i += 1
+                used.add(candidate)
+                conn.execute(text('UPDATE "user" SET username=:username WHERE id=:id'), {'username': candidate, 'id': row['id']})
+            conn.execute(text('ALTER TABLE "user" ALTER COLUMN username SET NOT NULL'))
+            conn.execute(text('ALTER TABLE "user" ALTER COLUMN email DROP NOT NULL'))
+            conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS ix_user_username_unique ON "user" (username)'))
+        else:
+            cols = [r[1] for r in conn.execute(text('PRAGMA table_info(user)')).fetchall()]
+            if 'username' not in cols:
+                conn.execute(text('ALTER TABLE user ADD COLUMN username VARCHAR(80)'))
+            rows = conn.execute(text('SELECT id, name, email, username FROM user ORDER BY id')).mappings().all()
+            used = set([r['username'] for r in rows if r['username']])
+            for row in rows:
+                if row['username']:
+                    continue
+                base = slug_username((row['email'] or '').split('@')[0] or row['name'] or f'user{row["id"]}')
+                candidate = base
+                i = 2
+                while candidate in used:
+                    candidate = f'{base}{i}'[:80]
+                    i += 1
+                used.add(candidate)
+                conn.execute(text('UPDATE user SET username=:username WHERE id=:id'), {'username': candidate, 'id': row['id']})
+    print('Migración de usuarios completada.')
 
 @app.errorhandler(403)
 def e403(e): return render_template('errors/error.html', code=403, title='Acceso restringido', message='No tenés permiso para entrar a esta sección.'),403

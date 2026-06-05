@@ -17,7 +17,7 @@ flask run
 Abrir: http://127.0.0.1:5000
 
 Admin inicial:
-- admin@hosanna.local
+- admin
 - admin123
 
 ## Twilio SMS opcional
