@@ -174,6 +174,41 @@ def unique_username(base):
         i += 1
     return candidate
 
+
+
+def admin_seed_credentials():
+    """Lee credenciales iniciales desde variables de entorno.
+    No se deben escribir contraseñas reales en el código ni en GitHub.
+    """
+    username = os.getenv('ADMIN_USERNAME', 'admin').strip().lower()
+    name = os.getenv('ADMIN_NAME', 'Administrador Hosanna').strip() or 'Administrador Hosanna'
+    email = (os.getenv('ADMIN_EMAIL', '') or '').strip().lower() or None
+    phone = (os.getenv('ADMIN_PHONE', '') or '').strip() or None
+    password = os.getenv('ADMIN_PASSWORD')
+    return username, name, email, phone, password
+
+def ensure_admin_user(reset_password=False):
+    username, name, email, phone, password = admin_seed_credentials()
+    if not password:
+        raise RuntimeError('Falta ADMIN_PASSWORD en variables de entorno. No se creará/actualizará el admin sin contraseña segura.')
+    admin = User.query.filter_by(username=username).first()
+    if not admin:
+        admin = User(name=name, username=username, email=email, phone=phone, role='admin', active=True)
+        admin.set_password(password)
+        db.session.add(admin)
+    else:
+        admin.name = admin.name or name
+        admin.role = 'admin'
+        admin.active = True
+        if email and admin.email != email:
+            admin.email = email
+        if phone and admin.phone != phone:
+            admin.phone = phone
+        if reset_password:
+            admin.set_password(password)
+    db.session.commit()
+    return admin
+
 def send_sms(to, body):
     sid = os.getenv('TWILIO_ACCOUNT_SID')
     token = os.getenv('TWILIO_AUTH_TOKEN')
@@ -243,6 +278,29 @@ def login():
 @login_required
 def logout():
     logout_user(); flash('Sesión cerrada correctamente.', 'success'); return redirect(url_for('public_home'))
+
+
+@app.route('/account/password', methods=['GET','POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        current = request.form.get('current_password') or ''
+        new = request.form.get('new_password') or ''
+        confirm = request.form.get('confirm_password') or ''
+        if not current_user.check_password(current):
+            flash('La contraseña actual no coincide.', 'danger')
+            return redirect(url_for('change_password'))
+        if len(new) < 8:
+            flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger')
+            return redirect(url_for('change_password'))
+        if new != confirm:
+            flash('La confirmación no coincide.', 'danger')
+            return redirect(url_for('change_password'))
+        current_user.set_password(new)
+        db.session.commit()
+        flash('Contraseña actualizada correctamente.', 'success')
+        return redirect(url_for('admin_dashboard') if current_user.role == 'admin' else url_for('leader_dashboard'))
+    return render_template('account/change_password.html')
 
 @app.route('/admin')
 @login_required
@@ -398,17 +456,22 @@ def init_db():
 def upgrade_db():
     db.create_all(); print('Base actualizada.')
 
+@app.cli.command('ensure-admin')
+def ensure_admin():
+    reset = (os.getenv('ADMIN_RESET_ON_DEPLOY', '').lower() in ['1','true','yes','on'])
+    ensure_admin_user(reset_password=reset)
+    print('Admin verificado correctamente.' + (' Contraseña actualizada.' if reset else ''))
+
+@app.cli.command('reset-admin-password')
+def reset_admin_password():
+    ensure_admin_user(reset_password=True)
+    print('Contraseña del admin actualizada desde ADMIN_PASSWORD.')
+
 @app.cli.command('seed')
 def seed():
-    if not User.query.filter_by(username='admin').first():
-        admin=User(name='Administrador Hosanna',username='admin',email='admin@hosanna.local',role='admin',active=True,phone='')
-        admin.set_password('admin123'); db.session.add(admin)
-    if not User.query.filter_by(username='liderdemo').first():
-        leader=User(name='Líder Demo',username='liderdemo',email='lider@hosanna.local',role='leader',active=True,phone='88888888')
-        leader.set_password('lider123'); db.session.add(leader); db.session.flush()
-        cell=Cell(name='Célula Demo Nazareth',leader_id=leader.id,barrio='Nazareth',address='Liberia, Guanacaste',day='Miércoles',time='19:00',phone='88888888',description='Grupo familiar de prueba.',latitude=10.6350,longitude=-85.4377,status='active')
-        cell.google_maps_url=maps_url(cell.latitude,cell.longitude); cell.waze_url=waze_url(cell.latitude,cell.longitude); db.session.add(cell)
-    db.session.commit(); print('Datos iniciales creados.')
+    """Datos mínimos: solo asegura admin. No crea líderes/células demo en producción."""
+    ensure_admin_user(reset_password=False)
+    print('Seed mínimo completado: admin verificado.')
 
 
 @app.cli.command('migrate-usernames')

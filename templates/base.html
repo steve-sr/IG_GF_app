@@ -35,6 +35,7 @@
         {% else %}
           <a href="{{ url_for('leader_dashboard') }}">Mi célula</a>
         {% endif %}
+        <a href="{{ url_for('change_password') }}">Mi cuenta</a>
         <a href="{{ url_for('logout') }}">Salir</a>
       {% else %}
         <a href="{{ url_for('login') }}">Ingresar</a>
