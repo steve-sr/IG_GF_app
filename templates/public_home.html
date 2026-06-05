@@ -1,0 +1,31 @@
+{% extends 'base.html' %}{% block title %}Buscar célula{% endblock %}{% block content %}
+<section class="hero fade-up">
+  <div class="eyebrow">Iglesia Hosanna</div>
+  <h1>Buscá una célula cerca de vos.</h1>
+  <p>Encontrá un grupo familiar por barrio, día o ubicación actual. Simple, rápido y sin complicaciones.</p>
+  <div class="actions">
+    <button class="btn primary" id="nearBtn"><span class="icon location"></span>Buscar cerca de mí</button>
+    <a class="btn ghost" href="#search"><span class="icon search"></span>Buscar por barrio</a>
+  </div>
+</section>
+
+<section class="panel search-panel fade-up delay-1" id="search">
+  <form class="searchbar" autocomplete="off">
+    <span class="icon search"></span>
+    <input name="q" value="{{q}}" placeholder="Nazareth, Moracia, miércoles..." aria-label="Buscar célula">
+    <button class="btn small soft">Buscar</button>
+  </form>
+  <div id="nearStatus" class="muted near-status"></div>
+  <div id="nearResults" class="grid cards"></div>
+</section>
+
+<section class="results-head fade-up delay-2">
+  <div>
+    <h2>Células disponibles</h2>
+    <p>Explorá las opciones activas y contactá al líder correspondiente.</p>
+  </div>
+</section>
+<section class="grid cards fade-up delay-3" id="normalResults">
+  {% for c in cells %}{% include 'partials/cell_card.html' %}{% else %}<div class="empty">No encontramos células con esa búsqueda.</div>{% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}{% block content %}
+<section class="dash-head shell fade-up"><div><p class="eyebrow">{{ 'Editar' if cell else 'Crear' }}</p><h1>{{ 'Editar célula' if cell else 'Nueva célula' }}</h1><p>Definí líder, barrio, horario y ubicación exacta para la búsqueda cercana.</p></div></section>
+<form method="post" class="form panel smart-form shell fade-up delay-1" novalidate>
+  <div class="form-section">
+    <div><h3>Datos principales</h3><p>Información que verá la persona al escanear el QR.</p></div>
+    <div class="grid two">
+      <label>Nombre de célula<input required data-label="Nombre de célula" name="name" value="{{ cell.name if cell else '' }}" placeholder="Ej. Célula Nazareth"></label>
+      <label>Líder<select name="leader_id"><option value="">Sin asignar</option>{% for l in leaders %}<option value="{{l.id}}" {% if cell and cell.leader_id==l.id %}selected{% endif %}>{{l.name}}</option>{% endfor %}</select></label>
+      <label>Barrio<select name="barrio" id="barrioSelect" required data-label="Barrio"><option value="">Seleccionar</option>{% for b in BARRIOS_LIBERIA %}<option value="{{b}}" {% if cell and cell.barrio==b %}selected{% endif %}>{{b}}</option>{% endfor %}</select></label>
+      <label id="otherBarrioWrap" class="hidden">Otro barrio<input name="barrio_other" value="{{cell.barrio_other if cell else ''}}" placeholder="Escribí el barrio"></label>
+      <label>Día<select name="day" required data-label="Día"><option value="">Seleccionar</option>{% for d in DAYS %}<option value="{{d}}" {% if cell and cell.day==d %}selected{% endif %}>{{d}}</option>{% endfor %}</select></label>
+      <label>Hora<select name="time" required data-label="Hora"><option value="">Seleccionar</option>{% for h in HOURS %}<option value="{{h}}" {% if cell and cell.time==h %}selected{% endif %}>{{h}}</option>{% endfor %}</select></label>
+    </div>
+    <label>Dirección<textarea name="address" required data-label="Dirección" placeholder="Dirección visible para visitantes">{{ cell.address if cell else '' }}</textarea></label>
+  </div>
+
+  <div class="form-section">
+    <div class="location-box">
+      <div><h3>Ubicación exacta</h3><p>Usá el GPS del dispositivo o pegá un link de Google Maps. Latitud y longitud son opcionales.</p></div>
+      <button type="button" class="btn soft" id="useLocation" data-cell-id="{{ cell.id if cell else '' }}"><span class="icon location"></span>Usar mi ubicación actual</button>
+    </div>
+    <div class="grid two"><label>Google Maps<input name="google_maps_url" id="mapsInput" value="{{ cell.google_maps_url if cell else '' }}" placeholder="https://maps.google.com/..."></label><label>Waze<input name="waze_url" id="wazeInput" value="{{ cell.waze_url if cell else '' }}" placeholder="Se genera automático si usás GPS"></label><label>Latitud <span class="hint">opcional</span><input name="latitude" id="latInput" value="{{ cell.latitude if cell and cell.latitude else '' }}"></label><label>Longitud <span class="hint">opcional</span><input name="longitude" id="lngInput" value="{{ cell.longitude if cell and cell.longitude else '' }}"></label></div>
+  </div>
+
+  <div class="form-section">
+    <div><h3>Contacto y estado</h3><p>Control de disponibilidad y datos de contacto.</p></div>
+    <div class="grid two"><label>Teléfono de contacto<input name="phone" value="{{ cell.phone if cell else '' }}" placeholder="Ej. 88888888"></label><label>Estado<select name="status"><option value="active" {% if not cell or cell.status=='active' %}selected{% endif %}>Activa</option><option value="paused" {% if cell and cell.status=='paused' %}selected{% endif %}>Pausada</option><option value="full" {% if cell and cell.status=='full' %}selected{% endif %}>Llena</option></select></label></div>
+    <label>Descripción<textarea name="description" placeholder="Descripción breve para visitantes">{{ cell.description if cell else '' }}</textarea></label>
+  </div>
+  <button class="btn primary full"><span class="icon chevron"></span>Guardar célula</button>
+</form>
+{% endblock %}

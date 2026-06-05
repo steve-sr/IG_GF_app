@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% block content %}
+<section class="dash-head shell fade-up">
+  <div>
+    <p class="eyebrow">Admin</p><h1>Células</h1>
+    <p>Control general de grupos familiares, líderes y estado de ubicación.</p>
+  </div>
+  <div class="actions"><button class="btn ghost" type="button" onclick="history.back()"><span class="icon arrow-left"></span>Volver</button><a class="btn primary" href="{{ url_for('admin_cell_new') }}"><span class="icon plus"></span>Nueva célula</a></div>
+</section>
+<div class="table-card shell fade-up delay-1"><table><tr><th>Nombre</th><th>Barrio</th><th>Día</th><th>Líder</th><th>Ubicación</th><th>Acciones</th></tr>{% for c in cells %}<tr><td><b>{{c.name}}</b></td><td>{{c.barrio_other or c.barrio}}</td><td>{{c.day}} · {{c.time}}</td><td>{{c.leader.name if c.leader else '—'}}</td><td>{% if c.latitude %}<span class="distance-badge"><span class="icon location"></span>Lista</span>{% else %}<span class="pill">Pendiente</span>{% endif %}</td><td><div class="row-actions"><a class="btn small ghost" href="{{ url_for('admin_cell_edit', cell_id=c.id) }}">Editar</a><form method="post" action="{{ url_for('admin_cell_delete', cell_id=c.id) }}" data-confirm="Eliminar célula" data-confirm-message="Esta acción eliminará la célula {{ c.name }}. No se puede deshacer."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form></div></td></tr>{% else %}<tr><td colspan="6"><div class="empty">No hay células creadas.</div></td></tr>{% endfor %}</table></div>
+{% endblock %}

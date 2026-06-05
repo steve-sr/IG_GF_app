@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% block content %}
+<section class="dash-head fade-up shell">
+  <div>
+    <p class="eyebrow">Panel administrativo</p>
+    <h1>Gestión de células</h1>
+    <p>Administrá líderes, horarios, barrios y ubicaciones exactas desde un solo lugar.</p>
+  </div>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('admin_cell_new') }}"><span class="icon plus"></span>Nueva célula</a>
+    <a class="btn ghost" href="{{ url_for('admin_leaders') }}"><span class="icon user"></span>Líderes</a>
+  </div>
+</section>
+<section class="stats shell fade-up delay-1">
+  {% for k,v in stats.items() %}<div class="stat"><strong>{{v}}</strong><span>{{k}}</span></div>{% endfor %}
+</section>
+<section class="panel shell fade-up delay-2">
+  <div class="panel-title"><div><h2>Recientes</h2><p>Últimas células registradas en el sistema.</p></div><a class="btn small ghost" href="{{ url_for('admin_cells') }}">Ver todas</a></div>
+  <div class="grid cards">{% for c in recent %}{% include 'partials/cell_card.html' %}{% else %}<div class="empty">Todavía no hay células registradas.</div>{% endfor %}</div>
+</section>
+{% endblock %}

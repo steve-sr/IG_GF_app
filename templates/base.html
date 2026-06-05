@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#082f8f">
+  <title>{% block title %}IG GF{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+</head>
+<body>
+  <div id="splash" class="splash" aria-hidden="true">
+    <div class="splash-card">
+      <img src="{{ url_for('static', filename='img/hosanna-logo.png') }}" onerror="this.style.display='none'" alt="Hosanna">
+      <h1>Hosanna</h1>
+      <p>Un gusto tenerte aquí</p>
+      <div class="splash-line"></div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a class="brand" href="{{ url_for('public_home') }}" aria-label="Inicio">
+      <img src="{{ url_for('static', filename='img/hosanna-logo.png') }}" onerror="this.style.display='none'" alt="IG GF">
+      <span>IG GF</span>
+    </a>
+    <div class="nav-actions">
+      {% if current_user.is_authenticated %}
+        <button type="button" class="nav-back" onclick="history.length>1?history.back():location.href='{{ url_for('public_home') }}'">
+          <span class="icon arrow-left"></span>Volver
+        </button>
+        {% if current_user.role=='admin' %}
+          <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+        {% else %}
+          <a href="{{ url_for('leader_dashboard') }}">Mi célula</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}">Salir</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Ingresar</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main class="page">
+    {% with messages=get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="toast-wrap">
+          {% for cat,msg in messages %}
+            <div class="toast {{cat}}"><span>{{msg}}</span><button type="button" onclick="this.parentElement.remove()">×</button></div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

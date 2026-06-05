@@ -1,0 +1,29 @@
+<article class="card">
+  <div class="card-top">
+    <div>
+      <h3>{{ c.name }}</h3>
+      <p>{{ c.barrio_other or c.barrio }}</p>
+    </div>
+    {% if c.distance_label is defined %}
+      <span class="pill distance-pill"><span class="icon location"></span>{{ c.distance_label }}</span>
+    {% else %}
+      <span class="pill status-pill"><span class="status-dot"></span>{{ c.day }} · {{ c.time }}</span>
+    {% endif %}
+  </div>
+  {% if c.distance_label is defined %}
+    <p class="distance-line"><span class="icon location"></span>{{ c.distance_label }} de tu ubicación</p>
+    <p class="muted"><span class="icon clock"></span> {{ c.day }} · {{ c.time }}</p>
+  {% else %}
+    <p class="muted"><span class="icon clock"></span> {{ c.day }} · {{ c.time }}</p>
+  {% endif %}
+  <p class="muted">{{ c.description or 'Célula disponible para integrarte.' }}</p>
+  <div class="meta">
+    <span><i class="icon user"></i>{{ c.leader.name if c.leader else 'Líder por asignar' }}</span>
+    <span><i class="icon location"></i>{{ c.address }}</span>
+  </div>
+  <div class="card-actions">
+    {% if c.google_maps_url %}<a class="btn small ghost" target="_blank" href="{{ c.google_maps_url }}"><span class="icon map"></span>Maps</a>{% endif %}
+    {% if c.waze_url %}<a class="btn small ghost" target="_blank" href="{{ c.waze_url }}"><span class="icon location"></span>Waze</a>{% endif %}
+    {% if c.phone %}<a class="btn small primary" href="sms:{{ c.phone }}"><span class="icon phone"></span>Contactar</a>{% endif %}
+  </div>
+</article>

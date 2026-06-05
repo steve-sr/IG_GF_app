@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<section class="error-card fade-up"><div class="error-code">{{code}}</div><h1>{{title}}</h1><p>{{message}}</p><div class="actions"><a href="{{ url_for('public_home') }}" class="btn primary">Volver al inicio</a><button type="button" class="btn ghost" onclick="history.back()">Volver atrás</button></div></section>{% endblock %}
