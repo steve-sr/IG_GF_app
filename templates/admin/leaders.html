@@ -14,6 +14,12 @@
   <p><b>Usuario:</b> {{generated.username}}</p>
   <p><b>Contraseña:</b> {{generated.password}}</p>
   <textarea readonly>{{generated.body}}</textarea>
+  <div class="card-actions credentials-actions">
+    {% if generated.whatsapp_url %}
+    <a class="btn primary" href="{{ generated.whatsapp_url }}" target="_blank" rel="noopener"><span class="icon chat"></span>Enviar por WhatsApp</a>
+    {% endif %}
+    <button class="btn ghost" type="button" data-copy-text="{{ generated.body|e }}"><span class="icon copy"></span>Copiar mensaje</button>
+  </div>
 </div>
 {% endif %}
 

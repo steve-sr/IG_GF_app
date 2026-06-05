@@ -19,7 +19,8 @@ if db_url.startswith('postgres://'):
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-APP_PUBLIC_URL = os.getenv('APP_PUBLIC_URL', 'http://127.0.0.1:5000').rstrip('/')
+APP_PUBLIC_URL = os.getenv('APP_BASE_URL') or os.getenv('APP_PUBLIC_URL') or 'https://celulas.hosannaigle.com'
+APP_PUBLIC_URL = APP_PUBLIC_URL.rstrip('/')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -399,11 +400,17 @@ def admin_leaders():
             flash('Ya existe un usuario con ese correo.', 'danger'); return redirect(url_for('admin_leaders'))
         u=User(name=name,username=username,email=email,phone=phone,role='leader',active=True); u.set_password(password); db.session.add(u); db.session.commit()
         login_link = APP_PUBLIC_URL + url_for('login')
-        body=f'Hola {name}. Bienvenido al equipo de líderes de Iglesia Hosanna. Acceso: {login_link} Usuario: {username} Contraseña: {password}'
+        body=(
+            f'Hola {name}. Bienvenido al equipo de líderes de Iglesia Hosanna.\n\n'
+            f'Acceso:\n{login_link}\n\n'
+            f'Usuario:\n{username}\n\n'
+            f'Contraseña:\n{password}'
+        )
+        credentials_whatsapp_url = wa_link(phone, body) if phone else ''
         sent=False; sms_msg=''
         if request.form.get('send_sms') == 'on' and phone:
             sent, sms_msg = send_sms(phone, body); flash(sms_msg, 'success' if sent else 'warning')
-        generated={'name':name,'username':username,'email':email,'password':password,'phone':phone,'body':body,'sent':sent}
+        generated={'name':name,'username':username,'email':email,'password':password,'phone':phone,'body':body,'sent':sent,'whatsapp_url':credentials_whatsapp_url}
         flash('Líder creado correctamente.', 'success')
     return render_template('admin/leaders.html', leaders=User.query.filter_by(role='leader').order_by(User.created_at.desc()).all(), generated=generated)
 

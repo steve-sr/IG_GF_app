@@ -106,3 +106,4 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
   .leader-sms-row{align-items:flex-start;flex-direction:column}
   .leader-sms-row .switch{align-self:flex-start}
 }
+.credentials-actions{margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}.credentials-actions .btn{width:auto}.icon.copy::before{content:"";display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-radius:3px;box-shadow:4px -4px 0 -1px var(--surface, #fff),4px -4px 0 1px currentColor}.success-box textarea{white-space:pre-wrap;line-height:1.55}

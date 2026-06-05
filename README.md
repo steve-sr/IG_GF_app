@@ -29,3 +29,13 @@ TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_FROM_NUMBER=
 ```
+
+## Variables importantes en Render
+
+Configura la URL pública para mensajes y credenciales:
+
+```env
+APP_BASE_URL=https://celulas.hosannaigle.com
+```
+
+El botón de WhatsApp para compartir credenciales usa esta URL y el teléfono del líder.

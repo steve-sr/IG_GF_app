@@ -128,3 +128,14 @@ qsa('[data-password-toggle]').forEach(btn=>{
     input.focus({preventScroll:true});
   });
 });
+
+document.addEventListener('click', async (e)=>{
+  const btn=e.target.closest('[data-copy-text]');
+  if(!btn) return;
+  try{
+    await navigator.clipboard.writeText(btn.dataset.copyText || '');
+    if(typeof toast==='function') toast('Mensaje copiado.', 'success');
+  }catch(err){
+    if(typeof toast==='function') toast('No se pudo copiar el mensaje.', 'danger');
+  }
+});
