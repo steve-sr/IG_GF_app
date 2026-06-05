@@ -100,6 +100,12 @@ def leader_required(fn):
 def clean_phone(phone):
     return re.sub(r'\D+', '', phone or '')
 
+def format_cr_phone(phone):
+    digits = clean_phone(phone)
+    if len(digits) == 8:
+        return f'{digits[:4]}-{digits[4:]}'
+    return (phone or '').strip()
+
 def cr_phone(phone):
     digits = clean_phone(phone)
     if len(digits) == 8: return '+506' + digits
@@ -380,10 +386,12 @@ def admin_cell_delete(cell_id):
 def admin_leaders():
     generated = None
     if request.method == 'POST':
-        name=request.form.get('name','').strip(); username=(request.form.get('username') or '').lower().strip(); email=(request.form.get('email') or '').lower().strip() or None; phone=request.form.get('phone','').strip()
+        name=request.form.get('name','').strip(); username=(request.form.get('username') or '').lower().strip(); email=(request.form.get('email') or '').lower().strip() or None; phone_digits=clean_phone(request.form.get('phone','')); phone=format_cr_phone(phone_digits) if phone_digits else None
         password=request.form.get('password') or random_password()
         if not name:
             flash('Nombre es obligatorio.', 'danger'); return redirect(url_for('admin_leaders'))
+        if phone_digits and len(phone_digits) != 8:
+            flash('El teléfono debe tener 8 dígitos. Ejemplo: 8888-8888.', 'danger'); return redirect(url_for('admin_leaders'))
         username = slug_username(username) if username else unique_username(name)
         if User.query.filter_by(username=username).first():
             flash('Ya existe un líder con ese nombre de usuario.', 'danger'); return redirect(url_for('admin_leaders'))

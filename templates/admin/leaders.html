@@ -1,16 +1,73 @@
 {% extends 'base.html' %}{% block content %}
-<section class="dash-head shell fade-up"><div><p class="eyebrow">Admin</p><h1>Líderes</h1><p>Creá accesos para líderes y enviá credenciales por SMS cuando esté configurado.</p></div><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a></section>
-{% if generated %}<div class="panel success-box shell fade-up"><div class="panel-title"><div><h2>Credenciales generadas</h2><p>Guardalas o compartilas con el líder.</p></div></div><p><b>Usuario:</b> {{generated.username}}</p><p><b>Contraseña:</b> {{generated.password}}</p><textarea readonly>{{generated.body}}</textarea></div>{% endif %}
-<form method="post" class="form panel smart-form shell fade-up delay-1" novalidate>
-  <div class="form-section">
-    <div><h3>Información del líder</h3><p>Estos datos serán usados para iniciar sesión y contacto operativo.</p></div>
-    <div class="grid two"><label>Nombre<input name="name" required data-label="Nombre"></label><label>Usuario<input name="username" data-label="Usuario" placeholder="Ej. felipe.perez"></label><label>Correo opcional<input name="email" type="email" data-label="Correo" placeholder="opcional"></label><label>Teléfono<input name="phone" placeholder="Ej. 88888888"></label><label>Contraseña opcional<input name="password" placeholder="Vacío = automática"></label></div>
+<section class="dash-head shell leader-page-head fade-up">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Líderes</h1>
+    <p>Creá accesos para líderes y enviá credenciales por SMS cuando esté configurado.</p>
   </div>
-  <div class="option-row compact">
-    <div><strong>Enviar credenciales por SMS</strong><p>Opcional. Usa Twilio si las variables de entorno están configuradas.</p></div>
+  <a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a>
+</section>
+
+{% if generated %}
+<div class="panel success-box shell leader-shell fade-up">
+  <div class="panel-title"><div><h2>Credenciales generadas</h2><p>Guardalas o compartilas con el líder.</p></div></div>
+  <p><b>Usuario:</b> {{generated.username}}</p>
+  <p><b>Contraseña:</b> {{generated.password}}</p>
+  <textarea readonly>{{generated.body}}</textarea>
+</div>
+{% endif %}
+
+<form method="post" class="form panel smart-form shell leader-shell fade-up delay-1" novalidate>
+  <div class="form-section leader-form-section">
+    <div class="form-section-head">
+      <div>
+        <h3>Información del líder</h3>
+        <p>Estos datos serán usados para iniciar sesión y contacto operativo.</p>
+      </div>
+    </div>
+    <div class="grid two leader-grid">
+      <label>Nombre
+        <input name="name" required data-label="Nombre" autocomplete="name" placeholder="Ej. Felipe Pérez">
+      </label>
+      <label>Usuario
+        <input name="username" data-label="Usuario" data-format="username" autocomplete="username" placeholder="Ej. felipe.perez">
+      </label>
+      <label>Correo (opcional)
+        <input name="email" type="email" data-label="Correo" autocomplete="email" placeholder="Ej. felipe@correo.com">
+      </label>
+      <label>Teléfono
+        <input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="9" placeholder="Ej. 8888-8888">
+      </label>
+      <label>Contraseña (opcional)
+        <input name="password" data-label="Contraseña" autocomplete="new-password" placeholder="Ej. H0sanna2026">
+      </label>
+    </div>
+  </div>
+  <div class="option-row compact leader-sms-row">
+    <div>
+      <strong>Enviar credenciales por SMS</strong>
+      <p>Opcional. Usa Twilio si las variables de entorno están configuradas.</p>
+    </div>
     <label class="switch" aria-label="Enviar SMS automático"><input type="checkbox" name="send_sms"><span></span></label>
   </div>
   <button class="btn primary full"><span class="icon plus"></span>Crear líder</button>
 </form>
-<div class="table-card shell fade-up delay-2"><table><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>{% for l in leaders %}<tr><td><b>{{l.name}}</b></td><td><b>{{l.username}}</b></td><td>{{l.email or '—'}}</td><td>{{l.phone or '—'}}</td><td><span class="distance-badge"><span class="status-dot"></span>{{'Activo' if l.active else 'Inactivo'}}</span></td><td><div class="row-actions"><form method="post" action="{{ url_for('admin_leader_delete', leader_id=l.id) }}" data-confirm="Eliminar líder" data-confirm-message="Se eliminará el líder {{ l.name }}. Las células asignadas quedarán sin líder."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form></div></td></tr>{% else %}<tr><td colspan="6"><div class="empty">No hay líderes registrados.</div></td></tr>{% endfor %}</table></div>
+
+<div class="table-card shell leader-shell fade-up delay-2">
+  <table class="leaders-table">
+    <tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
+    {% for l in leaders %}
+    <tr>
+      <td><b>{{l.name}}</b></td>
+      <td><b>{{l.username}}</b></td>
+      <td>{{l.email or '—'}}</td>
+      <td>{{l.phone or '—'}}</td>
+      <td><span class="distance-badge"><span class="status-dot"></span>{{'Activo' if l.active else 'Inactivo'}}</span></td>
+      <td><div class="row-actions"><form method="post" action="{{ url_for('admin_leader_delete', leader_id=l.id) }}" data-confirm="Eliminar líder" data-confirm-message="Se eliminará el líder {{ l.name }}. Las células asignadas quedarán sin líder."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form></div></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6"><div class="empty">No hay líderes registrados.</div></td></tr>
+    {% endfor %}
+  </table>
+</div>
 {% endblock %}

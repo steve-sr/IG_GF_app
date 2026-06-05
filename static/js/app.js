@@ -3,7 +3,21 @@ const esc=(v='')=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','
 window.addEventListener('load',()=>{setTimeout(()=>qs('#splash')?.classList.add('hide'),1050)});
 function toast(msg,type='success'){const wrap=qs('.toast-wrap')||document.body.appendChild(Object.assign(document.createElement('div'),{className:'toast-wrap'}));const el=document.createElement('div');el.className='toast '+type;el.innerHTML=`<span>${esc(msg)}</span><button type="button" onclick="this.parentElement.remove()">×</button>`;wrap.appendChild(el);setTimeout(()=>el.remove(),5200)}
 qsa('.toast').forEach(t=>setTimeout(()=>t.remove(),5500));
-qsa('.smart-form').forEach(form=>{form.setAttribute('novalidate','');form.addEventListener('submit',e=>{let bad=[];qsa('[required]',form).forEach(input=>{input.classList.remove('invalid');input.parentElement.querySelector('.field-error')?.remove();if(!String(input.value||'').trim()){bad.push(input);input.classList.add('invalid');const er=document.createElement('span');er.className='field-error';er.textContent=`${input.dataset.label||'Este campo'} es obligatorio.`;input.parentElement.appendChild(er)}});qsa('input[type="email"]',form).forEach(input=>{if(input.value.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim())){bad.push(input);input.classList.add('invalid');const er=document.createElement('span');er.className='field-error';er.textContent='Ingresá un correo válido.';input.parentElement.appendChild(er)}});if(bad.length){e.preventDefault();toast('Revisá los campos marcados antes de continuar.','danger');bad[0].focus({preventScroll:true});bad[0].scrollIntoView({behavior:'smooth',block:'center'})}})});
+qsa('[data-format="phone-cr"]').forEach(input=>{
+  const format=()=>{let d=input.value.replace(/\D+/g,'').slice(0,8); input.value=d.length>4?`${d.slice(0,4)}-${d.slice(4)}`:d;};
+  input.addEventListener('input',format);
+  input.addEventListener('blur',format);
+});
+
+qsa('.smart-form').forEach(form=>{form.setAttribute('novalidate','');form.addEventListener('submit',e=>{let bad=[];
+  const setBad=(input,msg)=>{bad.push(input);input.classList.add('invalid');input.parentElement.querySelector('.field-error')?.remove();const er=document.createElement('span');er.className='field-error';er.textContent=msg;input.parentElement.appendChild(er)};
+  qsa('input,select,textarea',form).forEach(input=>{input.classList.remove('invalid');input.parentElement.querySelector('.field-error')?.remove();});
+  qsa('[required]',form).forEach(input=>{if(!String(input.value||'').trim())setBad(input,`${input.dataset.label||'Este campo'} es obligatorio.`)});
+  qsa('input[type="email"]',form).forEach(input=>{if(input.value.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim()))setBad(input,'Ingresá un correo válido. Ejemplo: nombre@correo.com')});
+  qsa('[data-format="phone-cr"]',form).forEach(input=>{const d=input.value.replace(/\D+/g,''); if(input.value.trim() && d.length!==8)setBad(input,'Ingresá un teléfono válido de 8 dígitos. Ejemplo: 8888-8888')});
+  qsa('[data-format="username"]',form).forEach(input=>{const v=input.value.trim(); if(v&&!/^[a-zA-Z0-9._-]{3,40}$/.test(v))setBad(input,'Usá 3 a 40 caracteres: letras, números, punto, guion o guion bajo.')});
+  if(bad.length){e.preventDefault();toast('Revisá los campos marcados antes de continuar.','danger');bad[0].focus({preventScroll:true});bad[0].scrollIntoView({behavior:'smooth',block:'center'})}
+}});
 function updateOtherBarrio(){const s=qs('#barrioSelect'), w=qs('#otherBarrioWrap'); if(!s||!w)return; w.classList.toggle('hidden',s.value!=='Otro')} qs('#barrioSelect')?.addEventListener('change',updateOtherBarrio); updateOtherBarrio();
 function setLocationInputs(lat,lng){const maps=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;const waze=`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`; if(qs('#latInput'))qs('#latInput').value=lat; if(qs('#lngInput'))qs('#lngInput').value=lng; if(qs('#mapsInput'))qs('#mapsInput').value=maps; if(qs('#wazeInput'))qs('#wazeInput').value=waze;}
 function getPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Este navegador no soporta ubicación.')); navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),err=>{let m='No se pudo obtener la ubicación.'; if(err.code===1)m='Permiso de ubicación denegado.'; if(err.code===2)m='La ubicación no está disponible.'; if(err.code===3)m='La solicitud de ubicación tardó demasiado.'; reject(new Error(m))},{enableHighAccuracy:true,timeout:12000,maximumAge:0})})}

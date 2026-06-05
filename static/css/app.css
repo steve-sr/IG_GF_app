@@ -85,3 +85,24 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
 .password-toggle.is-visible .eye-closed{display:block}
 .dash-head .actions{align-items:center}
 @media (max-width:720px){.dash-head{align-items:flex-start}.dash-head .btn.ghost{width:auto}.nav-actions{gap:4px}.nav a:not(.brand){padding:9px 8px;font-size:13px}.password-toggle{right:6px}}
+
+/* Leaders page refinement */
+.leader-shell{max-width:980px;margin-left:auto;margin-right:auto;width:100%}
+.leader-page-head{max-width:980px}
+.leader-form-section{padding:22px}
+.form-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:2px}
+.leader-grid{align-items:start}
+.leader-grid label{min-width:0}
+.leader-sms-row{max-width:980px;margin-left:auto;margin-right:auto}
+.leaders-table td,.leaders-table th{white-space:nowrap}
+.leaders-table td:first-child,.leaders-table th:first-child{padding-left:18px}
+@media(max-width:900px){
+  .leader-shell,.leader-page-head{max-width:none;width:100%}
+  .leader-form-section{padding:18px}
+  .leader-sms-row{align-items:center;flex-direction:row}
+  .leaders-table{min-width:760px}
+}
+@media(max-width:560px){
+  .leader-sms-row{align-items:flex-start;flex-direction:column}
+  .leader-sms-row .switch{align-self:flex-start}
+}
