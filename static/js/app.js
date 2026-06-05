@@ -21,3 +21,82 @@ function openConfirmModal(title,message,onConfirm){
   overlay.querySelector('[data-ok]').addEventListener('click',()=>{overlay.remove(); onConfirm&&onConfirm();});
 }
 qsa('form[data-confirm]').forEach(form=>{form.addEventListener('submit',e=>{if(form.dataset.confirmed==='1')return; e.preventDefault(); openConfirmModal(form.dataset.confirm,form.dataset.confirmMessage,()=>{form.dataset.confirmed='1'; form.submit();});});});
+
+// Map picker: manually point the cell location on a map.
+(function(){
+  const openBtn = qs('#openMapPicker');
+  const modal = qs('#mapPickerModal');
+  const closeBtn = qs('#closeMapPicker');
+  const confirmBtn = qs('#confirmMapPicker');
+  const pickedText = qs('#mapPickedText');
+  const mapEl = qs('#mapPicker');
+  if(!openBtn || !modal || !mapEl) return;
+
+  let map = null;
+  let marker = null;
+  let picked = null;
+  const LIBERIA_CENTER = [10.6350, -85.4377];
+
+  function readCurrentCenter(){
+    const lat = parseFloat(qs('#latInput')?.value);
+    const lng = parseFloat(qs('#lngInput')?.value);
+    if(Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+    return LIBERIA_CENTER;
+  }
+
+  function setPicked(latlng){
+    picked = {lat: Number(latlng.lat), lng: Number(latlng.lng)};
+    if(marker) marker.setLatLng(picked); else marker = L.marker(picked).addTo(map);
+    if(confirmBtn) confirmBtn.disabled = false;
+    if(pickedText) pickedText.textContent = `Punto seleccionado: ${picked.lat.toFixed(7)}, ${picked.lng.toFixed(7)}`;
+  }
+
+  function initMap(){
+    if(!window.L){
+      toast('El mapa aún está cargando. Intentá de nuevo en unos segundos.','warning');
+      return false;
+    }
+    const center = readCurrentCenter();
+    if(!map){
+      map = L.map(mapEl, {scrollWheelZoom:true}).setView(center, 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+      map.on('click', e => setPicked(e.latlng));
+    }else{
+      map.setView(center, 14);
+    }
+    if(center !== LIBERIA_CENTER){
+      setPicked({lat:center[0], lng:center[1]});
+    }else{
+      picked = null;
+      if(marker){map.removeLayer(marker); marker=null;}
+      if(confirmBtn) confirmBtn.disabled = true;
+      if(pickedText) pickedText.textContent = 'Tocá el mapa para seleccionar el punto exacto.';
+    }
+    setTimeout(()=>map.invalidateSize(),120);
+    return true;
+  }
+
+  function openMap(){
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    initMap();
+  }
+  function closeMap(){
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+  }
+
+  openBtn.addEventListener('click', openMap);
+  closeBtn?.addEventListener('click', closeMap);
+  modal.addEventListener('click', e=>{ if(e.target===modal) closeMap(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modal.classList.contains('show')) closeMap(); });
+  confirmBtn?.addEventListener('click', ()=>{
+    if(!picked) return;
+    setLocationInputs(picked.lat.toFixed(7), picked.lng.toFixed(7));
+    toast('Punto del mapa cargado. Guardá los cambios para aplicarlo.','success');
+    closeMap();
+  });
+})();

@@ -63,3 +63,12 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
 @media(max-width:440px){
   .card-top{flex-direction:column}.status-pill{align-self:flex-start}.cell-meta span{align-items:flex-start}.nav{height:68px}.page{padding-left:16px;padding-right:16px}.searchbar{padding:11px}.searchbar>span.icon{display:none}
 }
+
+/* Map picker upgrade */
+.location-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.map-modal-overlay{display:none}.map-modal-overlay.show{display:grid}
+.map-picker-modal{width:min(980px,100%);background:white;border:1px solid var(--line);border-radius:30px;box-shadow:0 34px 100px rgba(7,19,39,.30);padding:22px;transform:translateY(10px) scale(.985);animation:modalIn .22s cubic-bezier(.22,1,.36,1) forwards}
+.map-picker-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:16px}.map-picker-head h2{margin:2px 0 6px;font-size:28px;letter-spacing:-.055em}.map-picker-head p{margin:0;color:var(--muted);line-height:1.45}
+.map-picker{height:min(62vh,560px);min-height:380px;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:#eef4fb;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7)}
+.map-picker-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:16px}.map-picked-text{color:var(--muted);font-weight:750}.leaflet-container{font:inherit}.leaflet-control-attribution{font-size:10px!important}
+@media(max-width:720px){.location-actions{justify-content:stretch}.location-actions .btn{width:100%}.map-picker-modal{padding:16px;border-radius:24px}.map-picker-head{flex-direction:column}.map-picker{height:52vh;min-height:340px}.map-picker-actions{flex-direction:column;align-items:stretch}.map-picker-actions .btn{width:100%}}
