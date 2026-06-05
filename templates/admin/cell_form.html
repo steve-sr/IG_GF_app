@@ -1,5 +1,5 @@
 {% extends 'base.html' %}{% block content %}
-<section class="dash-head shell fade-up"><div><p class="eyebrow">{{ 'Editar' if cell else 'Crear' }}</p><h1>{{ 'Editar célula' if cell else 'Nueva célula' }}</h1><p>Definí líder, barrio, horario y ubicación exacta para la búsqueda cercana.</p></div></section>
+<section class="dash-head shell fade-up"><div><p class="eyebrow">{{ 'Editar' if cell else 'Crear' }}</p><h1>{{ 'Editar célula' if cell else 'Nueva célula' }}</h1><p>Definí líder, barrio, horario y ubicación exacta para la búsqueda cercana.</p></div><a class="btn ghost" href="{{ url_for('admin_cells') }}"><span class="icon arrow-left"></span>Volver</a></section>
 <form method="post" class="form panel smart-form shell fade-up delay-1" novalidate>
   <div class="form-section">
     <div><h3>Datos principales</h3><p>Información que verá la persona al escanear el QR.</p></div>

@@ -100,3 +100,17 @@ qsa('form[data-confirm]').forEach(form=>{form.addEventListener('submit',e=>{if(f
     closeMap();
   });
 })();
+
+// Password visibility toggle.
+qsa('[data-password-toggle]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const wrap=btn.closest('.password-wrap');
+    const input=wrap?.querySelector('input');
+    if(!input)return;
+    const visible=input.type==='text';
+    input.type=visible?'password':'text';
+    btn.classList.toggle('is-visible',!visible);
+    btn.setAttribute('aria-label',visible?'Mostrar contraseña':'Ocultar contraseña');
+    input.focus({preventScroll:true});
+  });
+});

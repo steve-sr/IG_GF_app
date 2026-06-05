@@ -1,5 +1,5 @@
 {% extends 'base.html' %}{% block content %}
-<section class="dash-head shell fade-up"><div><p class="eyebrow">Admin</p><h1>Líderes</h1><p>Creá accesos para líderes y enviá credenciales por SMS cuando esté configurado.</p></div><button class="btn ghost" type="button" onclick="history.back()"><span class="icon arrow-left"></span>Volver</button></section>
+<section class="dash-head shell fade-up"><div><p class="eyebrow">Admin</p><h1>Líderes</h1><p>Creá accesos para líderes y enviá credenciales por SMS cuando esté configurado.</p></div><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a></section>
 {% if generated %}<div class="panel success-box shell fade-up"><div class="panel-title"><div><h2>Credenciales generadas</h2><p>Guardalas o compartilas con el líder.</p></div></div><p><b>Usuario:</b> {{generated.username}}</p><p><b>Contraseña:</b> {{generated.password}}</p><textarea readonly>{{generated.body}}</textarea></div>{% endif %}
 <form method="post" class="form panel smart-form shell fade-up delay-1" novalidate>
   <div class="form-section">
