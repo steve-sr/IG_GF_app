@@ -36,3 +36,30 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.splash{display:none}}
 
 .modal-overlay{position:fixed;inset:0;z-index:120;background:rgba(7,19,39,.38);backdrop-filter:blur(10px);display:grid;place-items:center;padding:22px;opacity:0;transition:.18s ease}.modal-overlay.show{opacity:1}.confirm-modal{width:min(440px,100%);background:white;border:1px solid var(--line);border-radius:28px;box-shadow:0 34px 100px rgba(7,19,39,.28);padding:28px;text-align:center;transform:translateY(10px) scale(.98);animation:modalIn .22s cubic-bezier(.22,1,.36,1) forwards}.modal-icon{width:54px;height:54px;border-radius:18px;background:#fff3f2;color:var(--danger);display:grid;place-items:center;margin:0 auto 14px}.confirm-modal h2{margin:0 0 8px;font-size:24px;letter-spacing:-.05em}.confirm-modal p{margin:0;color:var(--muted);line-height:1.5}.modal-actions{display:flex;gap:10px;justify-content:center;margin-top:22px}.modal-actions .btn{min-width:130px}@keyframes modalIn{to{transform:translateY(0) scale(1)}}
+
+/* UI refinement v3: cleaner public cards, responsive spacing, WhatsApp CTA */
+.hero{margin-top:18px;margin-bottom:46px;padding-top:48px;padding-bottom:50px}
+.hero .actions{margin-top:8px;gap:14px}
+.search-panel{margin-top:12px;margin-bottom:30px;padding:30px;border-radius:30px}
+.searchbar{min-height:66px;padding:10px 12px 10px 18px;border-radius:24px}
+.searchbar input{font-size:16px;min-height:42px}
+.results-head{max-width:1200px;margin-left:auto;margin-right:auto;margin-top:34px;margin-bottom:18px}
+#normalResults,#nearResults{max-width:1200px;margin-left:auto;margin-right:auto}
+#nearResults:not(:empty){margin-top:20px;padding-top:4px}
+.near-status{margin-top:18px!important;margin-bottom:2px!important}
+
+.cell-card{padding:26px;display:flex;flex-direction:column;gap:16px;min-height:292px}
+.cell-card .card-top{align-items:flex-start;margin-bottom:0}
+.cell-main{min-width:0}.cell-main h3{font-size:22px;line-height:1.12;margin-bottom:7px}.cell-barrio{color:var(--text);font-weight:780;line-height:1.2}.cell-description{color:var(--muted);font-weight:600;margin:0!important;min-height:22px}.cell-meta{margin:0;gap:10px}.cell-meta span{line-height:1.35;color:#536176}.status-pill{display:inline-flex;align-items:center;gap:7px;background:#eef6ff;color:var(--blue);border:1px solid rgba(15,95,208,.10);padding:8px 12px;box-shadow:0 6px 18px rgba(15,95,208,.06)}.status-dot{width:7px;height:7px;border-radius:50%;background:#16a36d;display:inline-block;flex:0 0 auto}.distance-line{margin:0!important;padding:10px 12px;border-radius:16px;background:linear-gradient(135deg,#eef6ff,#f7fbff);border:1px solid rgba(15,95,208,.10);width:max-content;max-width:100%;font-size:14px}.card-actions{margin-top:auto;display:flex;gap:9px;align-items:center}.card-actions .btn.small{min-height:38px;padding:9px 14px}.contact-btn{padding-left:16px!important;padding-right:18px!important}
+
+.icon.chat{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v14l4-4h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm-3 8H7v-2h10v2Zm-3-3H7V7h7v2Z"/></svg>')}
+
+@media(max-width:1100px){
+  .hero{padding-top:36px}.search-panel{max-width:920px}.cards{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+}
+@media(max-width:720px){
+  .hero{margin-top:0;margin-bottom:28px;padding:28px 0 30px}.hero h1{line-height:1.02}.hero p{font-size:16px;max-width:92%}.hero .actions{display:grid;grid-template-columns:1fr;gap:10px;max-width:340px;margin:18px auto 0}.search-panel{padding:18px;border-radius:24px}.searchbar{min-height:auto}.cell-card{min-height:auto;padding:22px}.cell-card .card-top{gap:12px}.cell-main h3{font-size:20px}.status-pill{font-size:12px;padding:7px 10px}.card-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.card-actions .contact-btn{grid-column:1/-1}.card-actions .btn{width:100%}.distance-line{width:100%;justify-content:center}.results-head{margin-top:26px}.results-head h2{font-size:22px}
+}
+@media(max-width:440px){
+  .card-top{flex-direction:column}.status-pill{align-self:flex-start}.cell-meta span{align-items:flex-start}.nav{height:68px}.page{padding-left:16px;padding-right:16px}.searchbar{padding:11px}.searchbar>span.icon{display:none}
+}

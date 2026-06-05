@@ -106,6 +106,22 @@ def cr_phone(phone):
     if phone and phone.startswith('+'): return phone
     return phone or ''
 
+def wa_link(phone, cell_name=''):
+    digits = clean_phone(phone)
+    if len(digits) == 8:
+        digits = '506' + digits
+    elif digits.startswith('506') and len(digits) == 11:
+        pass
+    elif phone and str(phone).startswith('+'):
+        digits = clean_phone(phone)
+    if not digits:
+        return ''
+    msg = 'Hola, me interesaría asistir al grupo familiar'
+    if cell_name:
+        msg += f' {cell_name}'
+    msg += '. ¿Me podrías brindar más información?'
+    return f'https://wa.me/{digits}?text={quote_plus(msg)}'
+
 def maps_url(lat, lng):
     return f'https://www.google.com/maps/search/?api=1&query={lat},{lng}'
 
@@ -160,7 +176,7 @@ def validate_cell_form(form):
 
 @app.context_processor
 def inject_globals():
-    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL)
+    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link)
 
 @app.route('/')
 def public_home():
@@ -183,7 +199,7 @@ def api_nearby():
     for c in Cell.query.filter_by(status='active').all():
         if c.latitude is None or c.longitude is None: continue
         km = distance_km(lat, lng, c.latitude, c.longitude)
-        rows.append({'id':c.id,'name':c.name,'barrio':c.barrio_other or c.barrio,'leader':c.leader.name if c.leader else 'Por asignar','day':c.day,'time':c.time,'address':c.address,'phone':c.phone or (c.leader.phone if c.leader else ''),'maps':c.google_maps_url,'waze':c.waze_url,'description':c.description or 'Célula disponible para integrarte.','distance_km':round(km,2),'distance_label':f'{int(km*1000)} m' if km < 1 else f'{km:.1f} km'})
+        rows.append({'id':c.id,'name':c.name,'barrio':c.barrio_other or c.barrio,'leader':c.leader.name if c.leader else 'Por asignar','day':c.day,'time':c.time,'address':c.address,'phone':c.phone or (c.leader.phone if c.leader else ''),'whatsapp_url':wa_link(c.phone or (c.leader.phone if c.leader else ''), c.name),'maps':c.google_maps_url,'waze':c.waze_url,'description':c.description or 'Célula disponible para integrarte.','distance_km':round(km,2),'distance_label':f'{int(km*1000)} m' if km < 1 else f'{km:.1f} km'})
     rows.sort(key=lambda x:x['distance_km'])
     return jsonify({'ok': True, 'cells': rows[:12]})
 
