@@ -4,7 +4,7 @@ window.addEventListener('load',()=>{setTimeout(()=>qs('#splash')?.classList.add(
 function toast(msg,type='success'){const wrap=qs('.toast-wrap')||document.body.appendChild(Object.assign(document.createElement('div'),{className:'toast-wrap'}));const el=document.createElement('div');el.className='toast '+type;el.innerHTML=`<span>${esc(msg)}</span><button type="button" onclick="this.parentElement.remove()">×</button>`;wrap.appendChild(el);setTimeout(()=>el.remove(),5200)}
 qsa('.toast').forEach(t=>setTimeout(()=>t.remove(),5500));
 qsa('[data-format="phone-cr"]').forEach(input=>{
-  const format=()=>{let d=input.value.replace(/\D+/g,'').slice(0,8); input.value=d.length>4?`${d.slice(0,4)}-${d.slice(4)}`:d;};
+  const format=()=>{let d=input.value.replace(/\D+/g,''); if(d.startsWith('506')&&d.length>=11)d=d.slice(3); d=d.slice(0,8); input.value=d.length>4?`${d.slice(0,4)}-${d.slice(4)}`:d;};
   input.addEventListener('input',format);
   input.addEventListener('blur',format);
 });
@@ -14,7 +14,7 @@ qsa('.smart-form').forEach(form=>{form.setAttribute('novalidate','');form.addEve
   qsa('input,select,textarea',form).forEach(input=>{input.classList.remove('invalid');input.parentElement.querySelector('.field-error')?.remove();});
   qsa('[required]',form).forEach(input=>{if(!String(input.value||'').trim())setBad(input,`${input.dataset.label||'Este campo'} es obligatorio.`)});
   qsa('input[type="email"]',form).forEach(input=>{if(input.value.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim()))setBad(input,'Ingresá un correo válido. Ejemplo: nombre@correo.com')});
-  qsa('[data-format="phone-cr"]',form).forEach(input=>{const d=input.value.replace(/\D+/g,''); if(input.value.trim() && d.length!==8)setBad(input,'Ingresá un teléfono válido de 8 dígitos. Ejemplo: 8888-8888')});
+  qsa('[data-format="phone-cr"]',form).forEach(input=>{let d=input.value.replace(/\D+/g,''); if(d.startsWith('506')&&d.length>=11)d=d.slice(3); if(input.value.trim() && d.length!==8)setBad(input,'Ingresá un teléfono válido de 8 dígitos. Ejemplo: 8888-8888')});
   qsa('[data-format="username"]',form).forEach(input=>{const v=input.value.trim(); if(v&&!/^[a-zA-Z0-9._-]{3,40}$/.test(v))setBad(input,'Usá 3 a 40 caracteres: letras, números, punto, guion o guion bajo.')});
   if(bad.length){e.preventDefault();toast('Revisá los campos marcados antes de continuar.','danger');bad[0].focus({preventScroll:true});bad[0].scrollIntoView({behavior:'smooth',block:'center'})}
 });});
@@ -25,16 +25,20 @@ async function useLocation(btn, save=false){const original=btn.innerHTML;try{btn
 qs('#useLocation')?.addEventListener('click',e=>useLocation(e.currentTarget,false)); qs('#saveLeaderLocation')?.addEventListener('click',e=>useLocation(e.currentTarget,true));
 qs('#nearBtn')?.addEventListener('click',async e=>{const btn=e.currentTarget,status=qs('#nearStatus'),res=qs('#nearResults'),normal=qs('#normalResults');const original=btn.innerHTML;try{btn.disabled=true;btn.innerHTML='<span class="icon location"></span>Detectando ubicación...';if(status)status.textContent='Solicitando permiso de ubicación...';const c=await getPosition();if(status)status.textContent='Buscando células cercanas...';const r=await fetch(`/api/nearby?lat=${c.latitude}&lng=${c.longitude}`);const data=await r.json();if(!data.ok)throw new Error(data.message);if(normal)normal.style.display='none';if(res){res.innerHTML=data.cells.length?data.cells.map(x=>`<article class="card cell-card"><div class="card-top"><div class="cell-main"><h3>${esc(x.name)}</h3><p class="cell-barrio">${esc(x.barrio)}</p></div><span class="pill status-pill"><span class="status-dot"></span>${esc(x.day)} · ${esc(x.time)}</span></div><p class="distance-line"><span class="icon location"></span>${esc(x.distance_label)} de tu ubicación</p><p class="cell-description">${esc(x.description||'Célula disponible para integrarte.')}</p><div class="meta cell-meta"><span><i class="icon user"></i>${esc(x.leader)}</span><span><i class="icon location"></i>${esc(x.address)}</span></div><div class="card-actions">${x.maps?`<a class="btn small ghost" target="_blank" rel="noopener" href="${esc(x.maps)}"><span class="icon map"></span>Maps</a>`:''}${x.waze?`<a class="btn small ghost" target="_blank" rel="noopener" href="${esc(x.waze)}"><span class="icon location"></span>Waze</a>`:''}${x.whatsapp_url?`<a class="btn small primary contact-btn" target="_blank" rel="noopener" href="${esc(x.whatsapp_url)}"><span class="icon chat"></span>Contactar</a>`:''}</div></article>`).join(''):'<div class="empty">Aún no hay células con ubicación exacta.</div>';}if(status)status.innerHTML=`<span class="distance-badge"><span class="icon location"></span>Resultados ordenados por cercanía</span>`}catch(err){toast(err.message||'No se pudo buscar cerca de vos.','danger');if(status)status.textContent='Podés buscar por barrio manualmente.'}finally{btn.disabled=false;btn.innerHTML=original}});
 
-function openConfirmModal(title,message,onConfirm){
+function openConfirmModal(title,message,onConfirm,opts={}){
   let overlay=document.createElement('div'); overlay.className='modal-overlay';
-  overlay.innerHTML=`<div class="confirm-modal"><div class="modal-icon"><span class="icon trash"></span></div><h2>${esc(title||'Confirmar acción')}</h2><p>${esc(message||'Esta acción no se puede deshacer.')}</p><div class="modal-actions"><button type="button" class="btn ghost" data-cancel>Cancelar</button><button type="button" class="btn danger" data-ok>Eliminar</button></div></div>`;
+  const type=opts.type||'danger';
+  const okText=opts.okText||(type==='danger'?'Eliminar':'Generar');
+  const okClass=type==='danger'?'btn danger':'btn primary';
+  const icon=type==='danger'?'trash':(opts.icon||'key');
+  overlay.innerHTML=`<div class="confirm-modal ${type==='danger'?'':'action-modal'}"><div class="modal-icon ${type==='danger'?'danger-icon':'action-icon'}"><span class="icon ${icon}"></span></div><h2>${esc(title||'Confirmar acción')}</h2><p>${esc(message||'Confirmá para continuar.')}</p><div class="modal-actions"><button type="button" class="btn ghost" data-cancel>Cancelar</button><button type="button" class="${okClass}" data-ok>${esc(okText)}</button></div></div>`;
   document.body.appendChild(overlay);
   requestAnimationFrame(()=>overlay.classList.add('show'));
   overlay.querySelector('[data-cancel]').addEventListener('click',()=>overlay.remove());
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
   overlay.querySelector('[data-ok]').addEventListener('click',()=>{overlay.remove(); onConfirm&&onConfirm();});
 }
-qsa('form[data-confirm]').forEach(form=>{form.addEventListener('submit',e=>{if(form.dataset.confirmed==='1')return; e.preventDefault(); openConfirmModal(form.dataset.confirm,form.dataset.confirmMessage,()=>{form.dataset.confirmed='1'; form.submit();});});});
+qsa('form[data-confirm]').forEach(form=>{form.addEventListener('submit',e=>{if(form.dataset.confirmed==='1')return; e.preventDefault(); openConfirmModal(form.dataset.confirm,form.dataset.confirmMessage,()=>{form.dataset.confirmed='1'; form.submit();},{type:form.dataset.confirmType||'danger',okText:form.dataset.confirmOk,icon:form.dataset.confirmIcon});});});
 
 
 // Extract coordinates from a pasted Google Maps link, including shared links from WhatsApp.

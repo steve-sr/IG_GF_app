@@ -643,3 +643,13 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
   .sector-footer .btn{width:100%;}
   .leader-chip-grid{grid-template-columns:1fr!important;}
 }
+
+/* Confirmation modal variants */
+.confirm-modal.action-modal .modal-icon,
+.modal-icon.action-icon{
+  background:#eff6ff;
+  color:var(--blue);
+}
+.confirm-modal.action-modal .modal-actions .btn.primary{
+  min-width:130px;
+}

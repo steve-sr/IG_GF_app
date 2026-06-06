@@ -10,7 +10,7 @@
       <label>Nombre<input name="name" required data-label="Nombre" autocomplete="name" placeholder="Ej. Felipe Pérez" value="{{ leader.name }}"></label>
       <label>Usuario<input name="username" required data-label="Usuario" data-format="username" autocomplete="username" placeholder="Ej. felipe.perez" value="{{ leader.username }}"></label>
       <label>Correo (opcional)<input name="email" type="email" data-label="Correo" autocomplete="email" placeholder="Ej. felipe@correo.com" value="{{ leader.email or '' }}"></label>
-      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="9" placeholder="Ej. 8888-8888" value="{{ leader.phone or '' }}"></label>
+      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="14" placeholder="Ej. 8888-8888" value="{{ leader.phone or '' }}"></label>
       {% if current_user.role == 'admin' %}
       <label>Mentor asignado<select name="mentor_id" id="mentorSelect"><option value="">Sin mentor</option>{% for m in mentors %}<option value="{{m.id}}" data-sector="{{m.sector or ''}}" {% if leader.mentor_id==m.id %}selected{% endif %}>{{m.name}}{% if m.sector %} · {{m.sector}}{% endif %}</option>{% endfor %}</select><span class="hint">El sector se actualiza con el mentor.</span></label>
       <label>Sector automático<input id="sectorPreview" value="{{ leader.sector or 'Sin sector' }}" readonly></label>

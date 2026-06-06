@@ -9,7 +9,7 @@
       <label>Nombre<input name="name" required data-label="Nombre" value="{{ mentor.name }}" placeholder="Ej. Steve Solís"></label>
       <label>Usuario<input name="username" required data-label="Usuario" data-format="username" value="{{ mentor.username }}" placeholder="Ej. steve.solis"></label>
       <label>Sector<select name="sector" required data-label="Sector"><option value="">Sin sector</option>{% for s in SECTORS if s != 'Sin sector' %}<option value="{{s}}" {% if mentor.sector==s %}selected{% endif %}>{{s}}</option>{% endfor %}</select></label>
-      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" maxlength="9" value="{{ mentor.phone or '' }}" placeholder="Ej. 8888-8888"></label>
+      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" maxlength="14" value="{{ mentor.phone or '' }}" placeholder="Ej. 8888-8888"></label>
       <label>Correo (opcional)<input name="email" type="email" data-label="Correo" value="{{ mentor.email or '' }}" placeholder="Ej. mentor@correo.com"></label>
       <label>Nueva contraseña (opcional)<input name="password" data-label="Contraseña" autocomplete="new-password" placeholder="Dejar vacío para no cambiar"></label>
     </div>

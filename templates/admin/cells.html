@@ -5,7 +5,7 @@
     <h1>Células</h1>
     <p>Vista agrupada por sector, con búsqueda, filtros y ordenamiento para evitar desorden operativo.</p>
   </div>
-  <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a><a class="btn primary" href="{{ url_for('admin_cell_new') }}"><span class="icon plus"></span>Nueva célula</a></div>
+  <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a>{% if current_user.role == 'admin' %}<a class="btn primary" href="{{ url_for('admin_cell_new') }}"><span class="icon plus"></span>Nueva célula</a>{% endif %}</div>
 </section>
 
 {% if sector_generated %}
@@ -72,7 +72,7 @@
     </div>
     {% if current_user.role == 'admin' %}
     <div class="sector-footer">
-      <form method="post" action="{{ url_for('admin_sector_credentials', sector=sector) }}" data-confirm="Generar mensaje para mentor" data-confirm-message="Se actualizarán las contraseñas de los líderes de {{ sector }} y se generará un mensaje para el mentor.">
+      <form method="post" action="{{ url_for('admin_sector_credentials', sector=sector) }}" data-confirm="Generar mensaje para mentor" data-confirm-type="action" data-confirm-ok="Generar" data-confirm-message="Se actualizarán las contraseñas de los líderes de {{ sector }} y se generará un mensaje para el mentor.">
         <button class="btn soft sector-message-btn" type="submit"><span class="icon chat"></span>Mensaje para mentor</button>
       </form>
     </div>

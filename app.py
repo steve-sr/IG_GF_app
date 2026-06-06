@@ -179,25 +179,34 @@ def is_manager():
 def clean_phone(phone):
     return re.sub(r'\D+', '', phone or '')
 
-def format_cr_phone(phone):
+def normalize_cr_digits(phone):
     digits = clean_phone(phone)
+    # Si copian +506 8888-8888 o 50688888888, guardamos solo los 8 dígitos nacionales.
+    if digits.startswith('506') and len(digits) == 11:
+        digits = digits[3:]
+    return digits
+
+def format_cr_phone(phone):
+    digits = normalize_cr_digits(phone)
     if len(digits) == 8:
         return f'{digits[:4]}-{digits[4:]}'
     return (phone or '').strip()
 
 def cr_phone(phone):
-    digits = clean_phone(phone)
+    raw_digits = clean_phone(phone)
+    digits = normalize_cr_digits(phone)
     if len(digits) == 8: return '+506' + digits
-    if digits.startswith('506') and len(digits) == 11: return '+' + digits
+    if raw_digits.startswith('506') and len(raw_digits) == 11: return '+' + raw_digits
     if phone and phone.startswith('+'): return phone
     return phone or ''
 
 def whatsapp_phone_digits(phone):
-    digits = clean_phone(phone)
+    raw_digits = clean_phone(phone)
+    digits = normalize_cr_digits(phone)
     if len(digits) == 8:
         return '506' + digits
-    if digits.startswith('506') and len(digits) == 11:
-        return digits
+    if raw_digits.startswith('506') and len(raw_digits) == 11:
+        return raw_digits
     if phone and str(phone).startswith('+'):
         return clean_phone(phone)
     return digits
@@ -640,7 +649,7 @@ def admin_cells():
 
 @app.route('/admin/cells/new', methods=['GET','POST'])
 @login_required
-@manager_required
+@admin_required
 def admin_cell_new():
     leaders = User.query.filter_by(role='leader', active=True).order_by(User.name).all()
     if current_user.role == 'mentor':
@@ -718,7 +727,7 @@ def admin_sector_credentials(sector):
 
     lines = []
     for leader in leaders:
-        digits = clean_phone(leader.phone)
+        digits = normalize_cr_digits(leader.phone)
         password = (digits or 'H0sann4') + '!'
         leader.set_password(password)
         leader.current_session_token = None
@@ -761,10 +770,12 @@ def admin_leaders():
     generated = None
     mentors = User.query.filter_by(role='mentor', active=True).order_by(User.name).all() if current_user.role == 'admin' else []
     if request.method == 'POST':
+        if current_user.role != 'admin':
+            abort(403)
         name = request.form.get('name','').strip()
         username = (request.form.get('username') or '').lower().strip()
         email = (request.form.get('email') or '').lower().strip() or None
-        phone_digits = clean_phone(request.form.get('phone',''))
+        phone_digits = normalize_cr_digits(request.form.get('phone',''))
         phone = format_cr_phone(phone_digits) if phone_digits else None
         password = request.form.get('password') or random_password()
         mentor_id = None
@@ -840,10 +851,12 @@ def admin_leader_edit(leader_id):
         abort(403)
     mentors = User.query.filter_by(role='mentor', active=True).order_by(User.name).all() if current_user.role == 'admin' else []
     if request.method == 'POST':
+        if current_user.role != 'admin':
+            abort(403)
         name = request.form.get('name','').strip()
         username = slug_username(request.form.get('username',''))
         email = (request.form.get('email') or '').lower().strip() or None
-        phone_digits = clean_phone(request.form.get('phone',''))
+        phone_digits = normalize_cr_digits(request.form.get('phone',''))
         phone = format_cr_phone(phone_digits) if phone_digits else None
         mentor_id = u.mentor_id
         sector = u.sector
@@ -918,7 +931,7 @@ def admin_mentors():
             name = request.form.get('name','').strip()
             username = (request.form.get('username') or '').lower().strip()
             email = (request.form.get('email') or '').lower().strip() or None
-            phone_digits = clean_phone(request.form.get('phone',''))
+            phone_digits = normalize_cr_digits(request.form.get('phone',''))
             phone = format_cr_phone(phone_digits) if phone_digits else None
             sector = normalize_sector(request.form.get('sector'))
             password = request.form.get('password') or random_password()
@@ -989,10 +1002,12 @@ def admin_mentor_edit(mentor_id):
     mentor = User.query.get_or_404(mentor_id)
     if mentor.role != 'mentor': abort(403)
     if request.method == 'POST':
+        if current_user.role != 'admin':
+            abort(403)
         name = request.form.get('name','').strip()
         username = slug_username(request.form.get('username',''))
         email = (request.form.get('email') or '').lower().strip() or None
-        phone_digits = clean_phone(request.form.get('phone',''))
+        phone_digits = normalize_cr_digits(request.form.get('phone',''))
         phone = format_cr_phone(phone_digits) if phone_digits else None
         sector = normalize_sector(request.form.get('sector'))
         active = request.form.get('active') == 'on'
