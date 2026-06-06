@@ -1,4 +1,4 @@
-import os, re, math, secrets, string
+import os, re, math, secrets, string, csv, unicodedata
 from datetime import datetime, timedelta
 from functools import wraps
 from urllib.parse import quote_plus
@@ -1130,6 +1130,234 @@ def api_update_location(cell_id):
     except Exception: return jsonify({'ok':False,'message':'Ubicación inválida.'}),400
     c.latitude=lat; c.longitude=lng; c.google_maps_url=maps_url(lat,lng); c.waze_url=waze_url(lat,lng); db.session.commit()
     return jsonify({'ok':True,'message':'Ubicación guardada.','maps':c.google_maps_url,'waze':c.waze_url})
+
+
+
+def _no_accents_upper(value):
+    value = safe_text(value, '')
+    value = unicodedata.normalize('NFD', value)
+    value = ''.join(ch for ch in value if unicodedata.category(ch) != 'Mn')
+    return value.upper().strip()
+
+def _norm_key(value):
+    value = safe_text(value, '')
+    value = unicodedata.normalize('NFD', value)
+    value = ''.join(ch for ch in value if unicodedata.category(ch) != 'Mn')
+    value = value.upper()
+    value = re.sub(r'[^A-Z0-9]+', ' ', value)
+    return re.sub(r'\s+', ' ', value).strip()
+
+def _import_username(prefix, name):
+    base = slug_username(f'{prefix}.{name}')
+    return unique_username(base)
+
+def _find_user_by_phone_or_name(role, name, phone):
+    phone_digits = clean_phone(phone)
+    users = User.query.filter_by(role=role).all()
+    if phone_digits:
+        for user in users:
+            if clean_phone(user.phone) == phone_digits:
+                return user
+    target = _norm_key(name)
+    if target:
+        for user in users:
+            if _norm_key(user.name) == target:
+                return user
+        for user in users:
+            existing = _norm_key(user.name)
+            if existing and (target in existing or existing in target):
+                return user
+    return None
+
+def _infer_barrio_from_address(address):
+    raw = safe_text(address, '')
+    normalized = _norm_key(raw)
+    aliases = [
+        ('CORAZON DE JESUS', 'Corazón de Jesús'),
+        ('LOS ANGELES', 'Barrio Los Ángeles'),
+        ('LA GUARIA', 'La Guaria'),
+        ('GUARIA', 'La Guaria'),
+        ('MORACIA', 'Moracia'),
+        ('SAN ROQUE', 'San Roque'),
+        ('FELIPE PEREZ', 'Felipe Pérez'),
+        ('PELÓNCITO', 'El Peloncito'),
+        ('PELONCITO', 'El Peloncito'),
+        ('PUEBLO NUEVO', 'Pueblo Nuevo'),
+        ('LA VICTORIA', 'La Victoria'),
+        ('VICTORIA', 'La Victoria'),
+        ('CHOROTEGA', 'Chorotega'),
+        ('LA GALLERA', 'La Gallera'),
+        ('INVU', 'INVU'),
+        ('DANIEL ODUBER', 'Daniel Oduber'),
+        ('RIO', 'Residencial Río'),
+        ('RESIDENCIAL DEL RIO', 'Residencial Río'),
+        ('RESIDENCIAL RIO', 'Residencial Río'),
+        ('SANTA LUISA', 'Santa Luisa'),
+        ('LOS ALMENDRALES', 'Los Almendrales'),
+        ('NAZARET', 'Nazareth'),
+        ('NAZARETH', 'Nazareth'),
+        ('BARRIO LA CRUZ', 'La Cruz'),
+        ('LA CRUZ', 'La Cruz'),
+        ('CAMBALACHE', 'El Cambalache'),
+        ('LINDA VISTA', 'Linda Vista'),
+        ('PIJIJE', 'Pijije'),
+        ('CANAS', 'Cañas'),
+        ('SANTA CRUZ', 'Santa Cruz'),
+        ('BELEN', 'Belén'),
+        ('LOMA BONITA', 'Loma Bonita'),
+        ('ANTIGUA HULERA', 'Antigua Hulera'),
+        ('EL GALLO', 'El Gallo'),
+    ]
+    for needle, label in aliases:
+        if needle in normalized:
+            if label in BARRIOS_LIBERIA:
+                return label, None, label
+            return 'Otro', label, label
+    for barrio in BARRIOS_LIBERIA:
+        if barrio != 'Otro' and _norm_key(barrio) in normalized:
+            return barrio, None, barrio
+    return 'Otro', None, 'Barrio por definir'
+
+def _normalize_day(value):
+    v = _norm_key(value)
+    if 'LUNES' in v: return 'Lunes'
+    if 'MARTES' in v: return 'Martes'
+    if 'MIERCOLES' in v: return 'Miércoles'
+    if 'JUEVES' in v: return 'Jueves'
+    if 'VIERNES' in v: return 'Viernes'
+    if 'SABADO' in v: return 'Sábado'
+    if 'DOMINGO' in v: return 'Domingo'
+    return ''
+
+@app.cli.command('import-mentor-sectors')
+def import_mentor_sectors():
+    """Importación única de mentores, sectores y asignación de líderes/células.
+    Lee data/mentor_sector_assignments.csv. No usar init-db en producción.
+    """
+    data_path = os.path.join(app.root_path, 'data', 'mentor_sector_assignments.csv')
+    if not os.path.exists(data_path):
+        raise RuntimeError(f'No existe el archivo de importación: {data_path}')
+
+    created_mentors = updated_mentors = created_leaders = updated_leaders = created_cells = updated_cells = 0
+    unmatched_without_phone = []
+
+    with open(data_path, newline='', encoding='utf-8') as fh:
+        rows = list(csv.DictReader(fh))
+
+    for row in rows:
+        sector = normalize_sector(row.get('sector'))
+        mentor_name = _no_accents_upper(row.get('mentor_name'))
+        mentor_phone_digits = clean_phone(row.get('mentor_phone'))
+        mentor_phone = format_cr_phone(mentor_phone_digits) if mentor_phone_digits else None
+        if not sector or not mentor_name:
+            continue
+
+        mentor = _find_user_by_phone_or_name('mentor', mentor_name, mentor_phone_digits)
+        if not mentor:
+            mentor = User(
+                name=mentor_name,
+                username=_import_username('mentor', mentor_name),
+                email=None,
+                phone=mentor_phone,
+                role='mentor',
+                active=True,
+                sector=sector
+            )
+            mentor.set_password((mentor_phone_digits or 'H0sann4') + '***')
+            db.session.add(mentor)
+            db.session.flush()
+            created_mentors += 1
+        else:
+            mentor.name = mentor_name
+            mentor.phone = mentor.phone or mentor_phone
+            mentor.role = 'mentor'
+            mentor.active = True
+            mentor.sector = sector
+            updated_mentors += 1
+
+        leader_name_raw = safe_text(row.get('leader_name'), '')
+        leader_phone_digits = clean_phone(row.get('leader_phone'))
+        leader_phone = format_cr_phone(leader_phone_digits) if leader_phone_digits else None
+        if not leader_name_raw:
+            continue
+
+        leader = _find_user_by_phone_or_name('leader', leader_name_raw, leader_phone_digits)
+        if not leader:
+            leader = User(
+                name=_no_accents_upper(leader_name_raw),
+                username=_import_username('lider', leader_name_raw),
+                email=None,
+                phone=leader_phone,
+                role='leader',
+                active=True,
+                sector=sector,
+                mentor_id=mentor.id
+            )
+            leader.set_password((leader_phone_digits or 'H0sann4') + '!')
+            db.session.add(leader)
+            db.session.flush()
+            created_leaders += 1
+            if not leader_phone_digits:
+                unmatched_without_phone.append(leader_name_raw)
+        else:
+            leader.mentor_id = mentor.id
+            leader.sector = sector
+            leader.role = 'leader'
+            leader.active = True
+            if leader_phone and not leader.phone:
+                leader.phone = leader_phone
+            updated_leaders += 1
+
+        address = safe_text(row.get('address'), '')
+        day = _normalize_day(row.get('day'))
+        barrio, barrio_other, barrio_label = _infer_barrio_from_address(address)
+        cell_name = f'Célula | {barrio_label}'
+        status = 'paused' if not address or not day else None
+
+        cell = Cell.query.filter_by(leader_id=leader.id).order_by(Cell.id.asc()).first()
+        if not cell:
+            cell = Cell(
+                name=cell_name,
+                leader_id=leader.id,
+                barrio=barrio,
+                barrio_other=barrio_other,
+                address=address or 'Por definir',
+                day=day or 'Por definir',
+                time='19:00',
+                phone=None,
+                description=None,
+                status=status or 'paused',
+                cell_type='adultos',
+                has_children_teacher=False
+            )
+            db.session.add(cell)
+            created_cells += 1
+        else:
+            cell.name = cell_name
+            cell.leader_id = leader.id
+            cell.barrio = barrio
+            cell.barrio_other = barrio_other
+            if address:
+                cell.address = address
+            if day:
+                cell.day = day
+            if not cell.time or str(cell.time).lower() in ['none', 'por definir']:
+                cell.time = '19:00'
+            cell.phone = None
+            cell.description = None
+            if status:
+                cell.status = 'paused'
+            updated_cells += 1
+
+    db.session.commit()
+    print('Importación de mentores y sectores completada.')
+    print(f'Mentores creados: {created_mentors} | actualizados: {updated_mentors}')
+    print(f'Líderes creados: {created_leaders} | actualizados/asignados: {updated_leaders}')
+    print(f'Células creadas: {created_cells} | actualizadas: {updated_cells}')
+    if unmatched_without_phone:
+        print('Líderes creados sin teléfono por no poder comparar con usuarios existentes:')
+        for name in unmatched_without_phone:
+            print(f'- {name}')
 
 @app.cli.command('init-db')
 def init_db():
