@@ -21,13 +21,13 @@
   </div>
 
   <nav class="nav">
-    <a class="brand" href="{{ url_for('landing_home') }}" aria-label="Inicio">
-      <img src="{{ url_for('static', filename='img/hosanna-logo.png') }}" onerror="this.style.display='none'" alt="Hosanna">
-      <span>Hosanna</span>
+    <a class="brand" href="{{ url_for('public_home') }}" aria-label="Inicio">
+      <img src="{{ url_for('static', filename='img/hosanna-logo.png') }}" onerror="this.style.display='none'" alt="Iglesia Hosanna">
+      <span>Iglesia Hosanna</span>
     </a>
     <div class="nav-actions">
-      <a href="{{ url_for('landing_home') }}">Inicio</a>
-      <a href="{{ url_for('public_home') }}">Buscar célula</a>
+      <a href="{{ url_for('public_home') }}">Inicio</a>
+      <a href="{{ url_for('public_cells') }}">Buscar célula</a>
       {% if current_user.is_authenticated %}
         {% if current_user.role in ['admin','mentor'] %}
           <a href="{{ url_for('admin_dashboard') }}">{{ 'Admin' if current_user.role == 'admin' else 'Mentor' }}</a>
@@ -72,29 +72,6 @@
       </div>
     </div>
   </div>
-
-
-  {% if not current_user.is_authenticated %}
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div>
-        <a class="brand footer-brand" href="{{ url_for('landing_home') }}">
-          <img src="{{ url_for('static', filename='img/hosanna-logo.png') }}" onerror="this.style.display='none'" alt="Hosanna">
-          <span>Hosanna</span>
-        </a>
-        <p>{{ church.address }}</p>
-      </div>
-      <div class="footer-links">
-        <a href="{{ url_for('landing_home') }}">Inicio</a>
-        <a href="{{ url_for('public_home') }}">Buscar célula</a>
-        {% if church.instagram %}<a target="_blank" rel="noopener" href="{{ church.instagram }}">Instagram</a>{% endif %}
-        {% if church.facebook %}<a target="_blank" rel="noopener" href="{{ church.facebook }}">Facebook</a>{% endif %}
-        {% if church.youtube %}<a target="_blank" rel="noopener" href="{{ church.youtube }}">YouTube</a>{% endif %}
-        {% if church.whatsapp %}<a target="_blank" rel="noopener" href="{{ church.whatsapp }}">WhatsApp</a>{% endif %}
-      </div>
-    </div>
-  </footer>
-  {% endif %}
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   {% block scripts %}{% endblock %}

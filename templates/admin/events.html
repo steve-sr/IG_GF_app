@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Eventos | Admin{% endblock %}
+{% block content %}
+<section class="dash-head shell fade-up">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Eventos</h1>
+    <p>Agregá, activá o desactivá eventos para mostrarlos en el home.</p>
+  </div>
+  <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}">Volver</a></div>
+</section>
+
+<section class="panel shell fade-up delay-1">
+  <div class="panel-title"><div><h2>Nuevo evento</h2><p>Solo los eventos activos aparecen en la página de inicio.</p></div></div>
+  <form method="post" class="form smart-form" novalidate>
+    <div class="grid two">
+      <label>Nombre del evento
+        <input name="title" placeholder="Ej. Noche de adoración" required>
+      </label>
+      <label>Fecha
+        <input name="event_date" placeholder="Ej. 25 de julio">
+      </label>
+      <label>Hora
+        <input name="event_time" placeholder="Ej. 7:00 PM">
+      </label>
+      <label>Lugar
+        <input name="location" placeholder="Ej. Auditorio principal">
+      </label>
+    </div>
+    <label>Imagen del evento (URL)
+      <input name="image_url" placeholder="https://...">
+    </label>
+    <label>Descripción
+      <textarea name="description" placeholder="Descripción corta del evento"></textarea>
+    </label>
+    <div class="option-row leader-sms-row">
+      <div><strong>Mostrar en el home</strong><p>Si está activo, el evento se verá públicamente.</p></div>
+      <label class="switch"><input type="checkbox" name="active" checked><span></span></label>
+    </div>
+    <button class="btn primary full" type="submit"><span class="icon plus"></span>Crear evento</button>
+  </form>
+</section>
+
+<section class="table-card shell fade-up delay-2">
+  <table class="leaders-table">
+    <thead><tr><th>Evento</th><th>Fecha</th><th>Hora</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <tbody>
+      {% for e in events %}
+      <tr>
+        <td><strong>{{ e.title }}</strong>{% if e.location %}<br><span class="muted-small">{{ e.location }}</span>{% endif %}</td>
+        <td>{{ e.event_date or '—' }}</td>
+        <td>{{ e.event_time or '—' }}</td>
+        <td><span class="pill status-pill"><span class="status-dot" {% if not e.active %}style="background:#98a2b3"{% endif %}></span>{{ 'Activo' if e.active else 'Oculto' }}</span></td>
+        <td>
+          <div class="row-actions">
+            <a class="btn small ghost" href="{{ url_for('admin_event_edit', event_id=e.id) }}">Editar</a>
+            <form method="post" action="{{ url_for('admin_event_toggle', event_id=e.id) }}"><button class="btn small soft" type="submit">{{ 'Ocultar' if e.active else 'Mostrar' }}</button></form>
+            <form method="post" action="{{ url_for('admin_event_delete', event_id=e.id) }}" data-confirm="Eliminar evento"><button class="btn small danger" type="submit">Eliminar</button></form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5"><div class="empty">No hay eventos creados.</div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

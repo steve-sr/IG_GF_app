@@ -8,6 +8,7 @@
   <div class="actions">
     <a class="btn primary" href="{{ url_for('admin_cell_new') }}"><span class="icon plus"></span>Nueva célula</a>
     <a class="btn ghost" href="{{ url_for('admin_leaders') }}"><span class="icon user"></span>Líderes</a>
+    {% if current_user.role == 'admin' %}<a class="btn ghost" href="{{ url_for('admin_events') }}"><span class="icon calendar"></span>Eventos</a>{% endif %}
   </div>
 </section>
 <section class="stats shell fade-up delay-1">

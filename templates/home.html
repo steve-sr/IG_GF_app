@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Iglesia Hosanna{% endblock %}
+{% block content %}
+<section class="site-hero fade-up">
+  <div class="site-hero-card">
+    <div class="site-hero-content">
+      <div class="eyebrow">Iglesia Hosanna</div>
+      <h1>Un lugar para encontrarte con Dios y crecer en familia.</h1>
+      <p>Somos una casa para adorar, servir y caminar juntos. Conectá con nuestros servicios, grupos familiares y tiempos de oración.</p>
+      <div class="actions hero-actions-left">
+        <a class="btn primary" href="{{ url_for('public_cells') }}"><span class="icon location"></span>Buscar célula</a>
+        <a class="btn ghost" href="#servicios"><span class="icon clock"></span>Ver horarios</a>
+      </div>
+    </div>
+    <div class="site-hero-logo">
+      <img src="{{ url_for('static', filename='img/hosanna-oficial.png') }}" onerror="this.src='{{ url_for('static', filename='img/hosanna-logo.png') }}'" alt="Iglesia Hosanna">
+    </div>
+  </div>
+</section>
+
+{% if events %}
+<section class="shell home-section fade-up delay-1" id="eventos">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Agenda</p>
+      <h2>Próximos eventos</h2>
+      <p>Actividades habilitadas por el equipo administrativo.</p>
+    </div>
+  </div>
+  <div class="event-slider">
+    {% for e in events %}
+      <article class="event-card">
+        {% if e.image_url %}
+          <div class="event-image" style="background-image:url('{{ e.image_url }}')"></div>
+        {% else %}
+          <div class="event-image event-image-fallback"><img src="{{ url_for('static', filename='img/hosanna-logo.png') }}" alt="Hosanna"></div>
+        {% endif %}
+        <div class="event-body">
+          <span class="pill">{{ e.event_date or 'Fecha por confirmar' }}{% if e.event_time %} · {{ e.event_time }}{% endif %}</span>
+          <h3>{{ e.title }}</h3>
+          {% if e.description %}<p>{{ e.description }}</p>{% endif %}
+          {% if e.location %}<div class="event-location"><span class="icon location"></span>{{ e.location }}</div>{% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="shell home-section fade-up delay-2" id="servicios">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Servicios</p>
+      <h2>Horarios de reunión</h2>
+      <p>Estos son nuestros espacios principales durante la semana.</p>
+    </div>
+  </div>
+  <div class="grid three service-grid">
+    <article class="pro-card service-card"><span>Domingo</span><h3>8:00 AM · 11:00 AM · 6:00 PM</h3><p>Servicios generales.</p></article>
+    <article class="pro-card service-card"><span>Martes</span><h3>7:00 PM</h3><p>Servicio entre semana.</p></article>
+    <article class="pro-card service-card"><span>Sábado</span><h3>8:00 AM · 6:00 PM</h3><p>Clamor e intercesión / Jóvenes.</p></article>
+  </div>
+</section>
+
+<section class="shell home-section fade-up delay-3" id="oracion">
+  <div class="prayer-card">
+    <div>
+      <p class="eyebrow">Oración diaria</p>
+      <h2>Oración 5:00 AM</h2>
+      <p>Todos los días de 5:00 AM a 6:00 AM por Zoom.</p>
+    </div>
+    <div class="actions">
+      <a class="btn primary" target="_blank" rel="noopener" href="https://us02web.zoom.us/j/85151928191?pwd=MW9NWnV3TFNlaW0ybytLZjQrbko1QT09">Unirme por Zoom</a>
+      <span class="pill">ID: 851 5192 8191 · Código: 495345</span>
+    </div>
+  </div>
+</section>
+
+<section class="shell home-section fade-up delay-3" id="ubicacion">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Ubicación</p>
+      <h2>Visitanos</h2>
+      <p>Encontranos en Google Maps y acompañanos en nuestros servicios.</p>
+    </div>
+    <a class="btn ghost" target="_blank" rel="noopener" href="https://maps.app.goo.gl/VbcK7NsycHdkpFVp7"><span class="icon location"></span>Abrir Maps</a>
+  </div>
+  <div class="map-preview">
+    <div>
+      <img src="{{ url_for('static', filename='img/hosanna-oficial.png') }}" onerror="this.style.display='none'" alt="Iglesia Hosanna">
+      <h3>Iglesia Hosanna</h3>
+      <p>Tu casa. Tu familia. Tu lugar para crecer.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer shell">
+  <div>
+    <strong>Iglesia Hosanna</strong>
+    <p>Conectá con nosotros y mantenete al día.</p>
+  </div>
+  <div class="footer-links">
+    <a target="_blank" rel="noopener" href="https://www.facebook.com/hosanna.igle">Facebook</a>
+    <a target="_blank" rel="noopener" href="https://www.instagram.com/hosannaigle/">Instagram</a>
+    <a target="_blank" rel="noopener" href="https://maps.app.goo.gl/VbcK7NsycHdkpFVp7">Google Maps</a>
+  </div>
+</footer>
+{% endblock %}

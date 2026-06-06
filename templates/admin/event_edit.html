@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Editar evento | Admin{% endblock %}
+{% block content %}
+<section class="dash-head shell fade-up">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Editar evento</h1>
+    <p>Actualizá la información pública del evento.</p>
+  </div>
+  <div class="actions"><a class="btn ghost" href="{{ url_for('admin_events') }}">Volver</a></div>
+</section>
+<section class="panel shell fade-up delay-1">
+  <form method="post" class="form smart-form" novalidate>
+    <div class="grid two">
+      <label>Nombre del evento
+        <input name="title" value="{{ event.title }}" required>
+      </label>
+      <label>Fecha
+        <input name="event_date" value="{{ event.event_date or '' }}" placeholder="Ej. 25 de julio">
+      </label>
+      <label>Hora
+        <input name="event_time" value="{{ event.event_time or '' }}" placeholder="Ej. 7:00 PM">
+      </label>
+      <label>Lugar
+        <input name="location" value="{{ event.location or '' }}" placeholder="Ej. Auditorio principal">
+      </label>
+    </div>
+    <label>Imagen del evento (URL)
+      <input name="image_url" value="{{ event.image_url or '' }}" placeholder="https://...">
+    </label>
+    <label>Descripción
+      <textarea name="description" placeholder="Descripción corta del evento">{{ event.description or '' }}</textarea>
+    </label>
+    <div class="option-row leader-sms-row">
+      <div><strong>Mostrar en el home</strong><p>Si está activo, el evento se verá públicamente.</p></div>
+      <label class="switch"><input type="checkbox" name="active" {% if event.active %}checked{% endif %}><span></span></label>
+    </div>
+    <button class="btn primary full" type="submit">Guardar cambios</button>
+  </form>
+</section>
+{% endblock %}

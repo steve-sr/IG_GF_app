@@ -19,7 +19,7 @@ if db_url.startswith('postgres://'):
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-APP_PUBLIC_URL = os.getenv('APP_BASE_URL') or os.getenv('APP_PUBLIC_URL') or 'https://hosannaigle.com'
+APP_PUBLIC_URL = os.getenv('APP_BASE_URL') or os.getenv('APP_PUBLIC_URL') or 'https://celulas.hosannaigle.com'
 APP_PUBLIC_URL = APP_PUBLIC_URL.rstrip('/')
 
 db = SQLAlchemy(app)
@@ -81,6 +81,18 @@ class LeadRequest(db.Model):
     phone = db.Column(db.String(30), nullable=False)
     barrio = db.Column(db.String(120), nullable=True)
     cell_id = db.Column(db.Integer, db.ForeignKey('cell.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class ChurchEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(160), nullable=False)
+    event_date = db.Column(db.String(40), nullable=True)
+    event_time = db.Column(db.String(40), nullable=True)
+    image_url = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    location = db.Column(db.String(180), nullable=True)
+    active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 @login_manager.user_loader
@@ -281,56 +293,9 @@ def validate_cell_form(form):
     if form.get('day') and form.get('day') not in DAYS: errors.append('Seleccioná un día válido.')
     return errors
 
-
-def env_value(key, default=''):
-    return (os.getenv(key, default) or default).strip()
-
-def landing_events():
-    return [
-        {
-            'date': env_value('EVENT_1_DATE', 'Próximamente'),
-            'title': env_value('EVENT_1_TITLE', 'Encuentro de familia'),
-            'time': env_value('EVENT_1_TIME', 'Hora por confirmar'),
-            'image': env_value('EVENT_1_IMAGE', ''),
-        },
-        {
-            'date': env_value('EVENT_2_DATE', 'Domingo'),
-            'title': env_value('EVENT_2_TITLE', 'Servicio de celebración'),
-            'time': env_value('EVENT_2_TIME', '10:00 a. m.'),
-            'image': env_value('EVENT_2_IMAGE', ''),
-        },
-        {
-            'date': env_value('EVENT_3_DATE', 'Miércoles'),
-            'title': env_value('EVENT_3_TITLE', 'Noche de oración'),
-            'time': env_value('EVENT_3_TIME', '7:00 p. m.'),
-            'image': env_value('EVENT_3_IMAGE', ''),
-        },
-    ]
-
-def church_info():
-    return {
-        'name': env_value('CHURCH_NAME', 'Iglesia Hosanna'),
-        'headline': env_value('HOME_HEADLINE', 'Un lugar para acercarte a Dios y caminar en familia.'),
-        'subtitle': env_value('HOME_SUBTITLE', 'Conectate con nuestros servicios, eventos y grupos familiares desde una sola plataforma.'),
-        'cover_image': env_value('HOME_COVER_IMAGE', ''),
-        'address': env_value('CHURCH_ADDRESS', 'Liberia, Guanacaste, Costa Rica'),
-        'maps_url': env_value('CHURCH_MAPS_URL', 'https://www.google.com/maps/search/?api=1&query=Iglesia%20Hosanna%20Liberia%20Guanacaste'),
-        'instagram': env_value('IG_URL', 'https://www.instagram.com/'),
-        'facebook': env_value('FB_URL', 'https://www.facebook.com/'),
-        'youtube': env_value('YT_URL', 'https://www.youtube.com/'),
-        'whatsapp': env_value('WA_URL', ''),
-    }
-
-def service_schedule():
-    return [
-        {'day': env_value('SERVICE_1_DAY', 'Domingo'), 'title': env_value('SERVICE_1_TITLE', 'Servicio general'), 'time': env_value('SERVICE_1_TIME', '10:00 a. m.')},
-        {'day': env_value('SERVICE_2_DAY', 'Miércoles'), 'title': env_value('SERVICE_2_TITLE', 'Oración y enseñanza'), 'time': env_value('SERVICE_2_TIME', '7:00 p. m.')},
-        {'day': env_value('SERVICE_3_DAY', 'Sábado'), 'title': env_value('SERVICE_3_TITLE', 'Reunión de jóvenes'), 'time': env_value('SERVICE_3_TIME', '6:00 p. m.')},
-    ]
-
 @app.context_processor
 def inject_globals():
-    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager, church=church_info())
+    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager)
 
 
 @app.before_request
@@ -365,26 +330,19 @@ def enforce_session_security():
     db.session.commit()
 
 @app.route('/')
-def landing_home():
-    return render_template('landing_home.html', info=church_info(), events=landing_events(), schedules=service_schedule())
-
-@app.route('/celula')
-def public_home_single():
-    return redirect(url_for('public_home'))
-
-@app.route('/grupos')
-def public_home_groups():
-    return redirect(url_for('public_home'))
+def public_home():
+    events = ChurchEvent.query.filter_by(active=True).order_by(ChurchEvent.created_at.desc()).limit(6).all()
+    return render_template('home.html', events=events)
 
 @app.route('/celulas')
-def public_home():
+def public_cells():
     q = (request.args.get('q') or '').strip()
     cells = Cell.query.filter_by(status='active')
     if q:
         like = f'%{q}%'
         cells = cells.filter(db.or_(Cell.barrio.ilike(like), Cell.barrio_other.ilike(like), Cell.name.ilike(like), Cell.address.ilike(like), Cell.day.ilike(like)))
     cells = cells.order_by(Cell.name.asc()).all()
-    return render_template('public_home.html', cells=cells, q=q)
+    return render_template('public_cells.html', cells=cells, q=q)
 
 @app.route('/api/nearby')
 def api_nearby():
@@ -637,6 +595,73 @@ def admin_leader_delete(leader_id):
     db.session.commit()
     flash('Líder eliminado correctamente. Sus células quedaron sin líder asignado.', 'success')
     return redirect(url_for('admin_leaders'))
+
+@app.route('/admin/events', methods=['GET','POST'])
+@login_required
+@admin_required
+def admin_events():
+    if request.method == 'POST':
+        title = (request.form.get('title') or '').strip()
+        if not title:
+            flash('El nombre del evento es obligatorio.', 'danger')
+            return redirect(url_for('admin_events'))
+        event = ChurchEvent(
+            title=title,
+            event_date=(request.form.get('event_date') or '').strip(),
+            event_time=(request.form.get('event_time') or '').strip(),
+            image_url=(request.form.get('image_url') or '').strip(),
+            description=(request.form.get('description') or '').strip(),
+            location=(request.form.get('location') or '').strip(),
+            active=request.form.get('active') == 'on'
+        )
+        db.session.add(event)
+        db.session.commit()
+        flash('Evento creado correctamente.', 'success')
+        return redirect(url_for('admin_events'))
+    events = ChurchEvent.query.order_by(ChurchEvent.created_at.desc()).all()
+    return render_template('admin/events.html', events=events)
+
+@app.route('/admin/events/<int:event_id>/edit', methods=['GET','POST'])
+@login_required
+@admin_required
+def admin_event_edit(event_id):
+    event = ChurchEvent.query.get_or_404(event_id)
+    if request.method == 'POST':
+        title = (request.form.get('title') or '').strip()
+        if not title:
+            flash('El nombre del evento es obligatorio.', 'danger')
+            return redirect(url_for('admin_event_edit', event_id=event.id))
+        event.title = title
+        event.event_date = (request.form.get('event_date') or '').strip()
+        event.event_time = (request.form.get('event_time') or '').strip()
+        event.image_url = (request.form.get('image_url') or '').strip()
+        event.description = (request.form.get('description') or '').strip()
+        event.location = (request.form.get('location') or '').strip()
+        event.active = request.form.get('active') == 'on'
+        db.session.commit()
+        flash('Evento actualizado correctamente.', 'success')
+        return redirect(url_for('admin_events'))
+    return render_template('admin/event_edit.html', event=event)
+
+@app.route('/admin/events/<int:event_id>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def admin_event_toggle(event_id):
+    event = ChurchEvent.query.get_or_404(event_id)
+    event.active = not event.active
+    db.session.commit()
+    flash('Estado del evento actualizado.', 'success')
+    return redirect(url_for('admin_events'))
+
+@app.route('/admin/events/<int:event_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_event_delete(event_id):
+    event = ChurchEvent.query.get_or_404(event_id)
+    db.session.delete(event)
+    db.session.commit()
+    flash('Evento eliminado correctamente.', 'success')
+    return redirect(url_for('admin_events'))
 
 @app.route('/leader')
 @login_required
