@@ -61,11 +61,20 @@
 
 <div class="table-card shell leader-shell fade-up delay-2">
   <table class="leaders-table">
-    <tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
+    <tr><th>Nombre</th><th>Usuario</th><th>Célula asignada</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
     {% for l in leaders %}
     <tr>
       <td><b>{{l.name}}</b></td>
       <td><b>{{l.username}}</b></td>
+      <td class="assigned-cells">
+        {% if l.cells %}
+          {% for cell in l.cells %}
+            <span class="mini-pill">{{ cell.name }}</span>
+          {% endfor %}
+        {% else %}
+          <span class="muted-inline">Sin célula</span>
+        {% endif %}
+      </td>
       <td>{{l.email or '—'}}</td>
       <td>{{l.phone or '—'}}</td>
       <td><span class="distance-badge"><span class="status-dot"></span>{{'Activo' if l.active else 'Inactivo'}}</span></td>
@@ -86,7 +95,7 @@
       </td>
     </tr>
     {% else %}
-    <tr><td colspan="6"><div class="empty">No hay líderes registrados.</div></td></tr>
+    <tr><td colspan="7"><div class="empty">No hay líderes registrados.</div></td></tr>
     {% endfor %}
   </table>
 </div>

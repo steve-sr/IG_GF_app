@@ -52,6 +52,7 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
 .cell-card .card-top{align-items:flex-start;margin-bottom:0}
 .cell-main{min-width:0}.cell-main h3{font-size:22px;line-height:1.12;margin-bottom:7px}.cell-barrio{color:var(--text);font-weight:780;line-height:1.2}.cell-description{color:var(--muted);font-weight:600;margin:0!important;min-height:22px}.cell-meta{margin:0;gap:10px}.cell-meta span{line-height:1.35;color:#536176}.status-pill{display:inline-flex;align-items:center;gap:7px;background:#eef6ff;color:var(--blue);border:1px solid rgba(15,95,208,.10);padding:8px 12px;box-shadow:0 6px 18px rgba(15,95,208,.06)}.status-dot{width:7px;height:7px;border-radius:50%;background:#16a36d;display:inline-block;flex:0 0 auto}.distance-line{margin:0!important;padding:10px 12px;border-radius:16px;background:linear-gradient(135deg,#eef6ff,#f7fbff);border:1px solid rgba(15,95,208,.10);width:max-content;max-width:100%;font-size:14px}.card-actions{margin-top:auto;display:flex;gap:9px;align-items:center}.card-actions .btn.small{min-height:38px;padding:9px 14px}.contact-btn{padding-left:16px!important;padding-right:18px!important}
 
+.icon.edit{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 19h1.4l10.3-10.3-1.4-1.4L5 17.6V19Zm-2 2v-4.25L16.7 3.05a2 2 0 0 1 2.83 0l1.42 1.42a2 2 0 0 1 0 2.83L7.25 21H3Z"/></svg>')}
 .icon.chat{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v14l4-4h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm-3 8H7v-2h10v2Zm-3-3H7V7h7v2Z"/></svg>')}
 
 @media(max-width:1100px){
@@ -198,3 +199,11 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
 }
 .ig-post-overlay strong{display:block;font-size:17px;line-height:1.18;letter-spacing:-.035em}
 @media(max-width:560px){.ig-post-card{flex-basis:230px;height:300px;border-radius:24px}.ig-slider{gap:14px}}
+
+
+/* Production polish */
+.row-actions .btn.small{min-width:112px;justify-content:center;box-shadow:0 10px 26px rgba(7,19,39,.05)}
+.row-actions .btn.small .icon{width:15px!important;height:15px!important;min-width:15px!important;min-height:15px!important}
+.gratitude-card .btn[disabled]{background:#f3f6fb;color:#667085;border:1px solid #e3eaf5;box-shadow:none;opacity:1}
+
+.assigned-cells{white-space:normal!important;min-width:160px;max-width:260px}.mini-pill{display:inline-flex;align-items:center;margin:3px 4px 3px 0;padding:7px 10px;border-radius:999px;background:#eef6ff;color:var(--blue);font-size:12px;font-weight:900;border:1px solid rgba(15,95,208,.08)}.muted-inline{color:var(--muted);font-weight:800;font-size:13px}

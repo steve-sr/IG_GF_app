@@ -2,7 +2,7 @@
   <div class="card-top">
     <div class="cell-main">
       <h3>{{ c.name }}</h3>
-      <p class="cell-barrio">{{ c.barrio_other or c.barrio }}</p>
+      <p class="cell-barrio">{{ c.barrio_other or c.barrio or 'Barrio por definir' }}</p>
     </div>
     <span class="pill status-pill"><span class="status-dot"></span>{{ c.day }} · {{ c.time }}</span>
   </div>
@@ -15,7 +15,7 @@
 
   <div class="meta cell-meta">
     <span><i class="icon user"></i>{{ c.leader.name if c.leader else 'Líder por asignar' }}</span>
-    <span><i class="icon location"></i>{{ c.address }}</span>
+    <span><i class="icon location"></i>{{ c.address or 'Dirección por definir' }}</span>
   </div>
 
   <div class="card-actions">
