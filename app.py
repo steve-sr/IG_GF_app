@@ -848,7 +848,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8588-0490",
         "username": "GRADELI.DUARTE",
         "password": "85880490!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "JANNET MIRANDA",
@@ -856,7 +856,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6001-0329",
         "username": "JANNET.MIRANDA",
         "password": "60010329!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "MARITZA UGARTE",
@@ -864,7 +864,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8593-9497",
         "username": "MARITZA.UGARTE",
         "password": "85939497!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ERIKA ACEVEDO",
@@ -872,7 +872,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8702-9708",
         "username": "ERIKA.ACEVEDO",
         "password": "87029708!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "JOSE ANGEL SALAZAR",
@@ -880,7 +880,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8443-6772",
         "username": "JOSE.SALAZAR",
         "password": "84436772!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "LEONARDO ALVAREZ",
@@ -888,7 +888,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8550-6266",
         "username": "LEONARDO.ALVAREZ",
         "password": "85506266!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ROYMAN VALENCIA",
@@ -896,7 +896,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6486-4275",
         "username": "ROYMAN.VALENCIA",
         "password": "64864275!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "KENNETH CENTENO",
@@ -904,7 +904,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8666-5560",
         "username": "KENNETH.CENTENO",
         "password": "86665560!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "GIOCONDA DE LA SEGURA LOPEZ",
@@ -912,7 +912,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8424-7460",
         "username": "GIOCONDA.LOPEZ",
         "password": "84247460!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ROBERT TALAVERA",
@@ -920,7 +920,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6043-2882",
         "username": "ROBERT.TALAVERA",
         "password": "60432882!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "LINETH RUBIO",
@@ -928,7 +928,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8844-7735",
         "username": "LINETH.RUBIO",
         "password": "88447735!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "JONATHAN MORENO",
@@ -936,7 +936,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8328-7691",
         "username": "JONATHAN.MORENO",
         "password": "83287691!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ROLAND GARCIA",
@@ -944,7 +944,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8787-9497",
         "username": "ROLAND.GARCIA",
         "password": "87879497!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "GILBERTH ORDONEZ",
@@ -952,7 +952,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8826-0133",
         "username": "GILBERTH.ORDONEZ",
         "password": "88260133!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "HECTOR CABALCETA",
@@ -960,7 +960,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "7290-9807",
         "username": "HECTOR.CABALCETA",
         "password": "72909807!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "SOBEIDA OBANDO",
@@ -968,7 +968,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8525-2228",
         "username": "SOBEIDA.OBANDO",
         "password": "85252228!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "LUIS CHAVES",
@@ -976,7 +976,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8826-6293",
         "username": "LUIS.CHAVES",
         "password": "88266293!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "WENDY SANDOVAL",
@@ -984,7 +984,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "7225-3984",
         "username": "WENDY.SANDOVAL",
         "password": "72253984!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "VANESSA TORRES",
@@ -992,7 +992,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8677-6468",
         "username": "VANESSA.TORRES",
         "password": "86776468!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "GUSTAVO CASTILLO",
@@ -1000,7 +1000,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8811-8073",
         "username": "GUSTAVO.CASTILLO",
         "password": "88118073!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ANDREI CASTRO",
@@ -1008,7 +1008,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8760-8356",
         "username": "ANDREI.CASTRO",
         "password": "87608356!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "RANDALL CORTES",
@@ -1016,7 +1016,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "7046-0451",
         "username": "RANDALL.CORTES",
         "password": "70460451!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "DAVID HERNANDEZ",
@@ -1024,7 +1024,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8413-4946",
         "username": "DAVID.HERNANDEZ",
         "password": "84134946!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "YORHANY RAMIREZ",
@@ -1032,7 +1032,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8941-6174",
         "username": "YORHANY.RAMIREZ",
         "password": "89416174!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "JEREMY PINA",
@@ -1040,7 +1040,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8754-9785",
         "username": "JEREMY.PINA",
         "password": "87549785!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ANGELICA PEREZ",
@@ -1048,7 +1048,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "7287-9236",
         "username": "ANGELICA.PEREZ",
         "password": "72879236!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ISTELYN MARCHENA",
@@ -1056,7 +1056,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8720-9378",
         "username": "ISTELYN.MARCHENA",
         "password": "87209378!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "RICHARD SANTANA",
@@ -1064,7 +1064,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8495-3414",
         "username": "RICHARD.SANTANA",
         "password": "84953414!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "DANILO GUTIERREZ",
@@ -1072,7 +1072,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6079-5230",
         "username": "DANILO.GUTIERREZ",
         "password": "60795230!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ANGELICA QUINTERO",
@@ -1080,7 +1080,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "7262-3899",
         "username": "ANGELICA.QUINTERO",
         "password": "72623899!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "SARA SALAZAR",
@@ -1088,7 +1088,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8884-7731",
         "username": "SARA.SALAZAR",
         "password": "88847731!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "CRISTOPHER CASTILLO",
@@ -1096,7 +1096,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "7298-1478",
         "username": "CRISTOPHER.CASTILLO",
         "password": "72981478!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ABIGAIL VARGAS",
@@ -1104,7 +1104,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8584-5351",
         "username": "ABIGAIL.VARGAS",
         "password": "85845351!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "CECI RODRIGUEZ",
@@ -1112,7 +1112,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6327-9935",
         "username": "CECI.RODRIGUEZ",
         "password": "63279935!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "FERNANDA FONSECA",
@@ -1120,7 +1120,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6123-1307",
         "username": "FERNANDA.FONSECA",
         "password": "61231307!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "PAUL DE TRINIDAD",
@@ -1128,7 +1128,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6057-2369",
         "username": "PAUL.TRINIDAD",
         "password": "60572369!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ALLISON CAMPOS",
@@ -1136,7 +1136,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8325-1664",
         "username": "ALLISON.CAMPOS",
         "password": "83251664!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "MAYELA CHAVARRIA",
@@ -1144,7 +1144,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8732-6608",
         "username": "MAYELA.CHAVARRIA",
         "password": "87326608!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ANGELA LOPEZ",
@@ -1152,7 +1152,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "7142-6027",
         "username": "ANGELA.LOPEZ",
         "password": "71426027!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "CHRISTOPHER",
@@ -1165,7 +1165,7 @@ BULK_LEADERS_IMPORT_DATA = [
     {
         "name": "ESTEBAN LOPEZ",
         "barrio": "SIN DIRECCION",
-        "phone": null,
+        "phone": None,
         "username": "ESTEBAN.LOPEZ",
         "password": "Hosanna2026!",
         "observation": "SIN TELEFONO PARA CONTRASENA"
@@ -1176,7 +1176,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8946-2702",
         "username": "JOHN.ESPINOSA",
         "password": "89462702!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "OLGER CORTES",
@@ -1184,7 +1184,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6206-6042",
         "username": "OLGER.CORTES",
         "password": "62066042!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "SOFIA ALVAREZ",
@@ -1192,7 +1192,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6212-2133",
         "username": "SOFIA.ALVAREZ",
         "password": "62122133!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ELEONORA MOLINA",
@@ -1200,12 +1200,12 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6057-2379",
         "username": "ELEONORA.MOLINA",
         "password": "60572379!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "CARLOS BERMUDEZ",
         "barrio": "LA HULERA",
-        "phone": null,
+        "phone": None,
         "username": "CARLOS.BERMUDEZ",
         "password": "Hosanna2026!",
         "observation": "SIN TELEFONO PARA CONTRASENA"
@@ -1216,7 +1216,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6400-3113",
         "username": "FABIAN.PRENDAS",
         "password": "64003113!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "VICTORIA REYES",
@@ -1224,7 +1224,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8388-5904",
         "username": "VICTORIA.REYES",
         "password": "83885904!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "MINOR TALAVERA",
@@ -1232,7 +1232,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8910-4270",
         "username": "MINOR.TALAVERA",
         "password": "89104270!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ELI MENDEZ",
@@ -1240,7 +1240,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8372-2747",
         "username": "ELI.MENDEZ",
         "password": "83722747!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "MARJORIE BUSTOS",
@@ -1248,7 +1248,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8779-4327",
         "username": "MARJORIE.BUSTOS",
         "password": "87794327!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "JEISON ROJAS",
@@ -1256,7 +1256,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "8971-4837",
         "username": "JEISON.ROJAS",
         "password": "89714837!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "YENIER ORTIZ",
@@ -1264,7 +1264,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "7043-7674",
         "username": "YENIER.ORTIZ",
         "password": "70437674!",
-        "observation": null
+        "observation": None
     },
     {
         "name": "ELIAS AGUILAR",
@@ -1272,7 +1272,7 @@ BULK_LEADERS_IMPORT_DATA = [
         "phone": "6323-8586",
         "username": "ELIAS.AGUILAR",
         "password": "63238586!",
-        "observation": null
+        "observation": None
     }
 ]
 
