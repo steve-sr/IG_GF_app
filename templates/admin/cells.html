@@ -8,6 +8,22 @@
   <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a><a class="btn primary" href="{{ url_for('admin_cell_new') }}"><span class="icon plus"></span>Nueva célula</a></div>
 </section>
 
+{% if sector_generated %}
+<section class="panel success-box shell fade-up sector-message-box">
+  <div class="panel-title">
+    <div>
+      <h2>Mensaje para mentor · {{ sector_generated.sector }}</h2>
+      <p>Copiá el mensaje o envialo por WhatsApp. Las contraseñas de estos líderes fueron actualizadas.</p>
+    </div>
+  </div>
+  <textarea readonly>{{ sector_generated.body }}</textarea>
+  <div class="card-actions credentials-actions">
+    {% if sector_generated.whatsapp_url %}<a class="btn primary" href="{{ sector_generated.whatsapp_url }}" target="_blank" rel="noopener"><span class="icon chat"></span>Enviar por WhatsApp</a>{% endif %}
+    <button class="btn ghost" type="button" data-copy-text="{{ sector_generated.body|e }}"><span class="icon copy"></span>Copiar mensaje</button>
+  </div>
+</section>
+{% endif %}
+
 <section class="panel shell fade-up delay-1 admin-filters">
   <form method="get" class="filters-grid">
     <label>Buscar<input name="q" value="{{ q or '' }}" placeholder="Célula, líder, barrio..."></label>
@@ -54,6 +70,13 @@
         </tbody>
       </table>
     </div>
+    {% if current_user.role == 'admin' %}
+    <div class="sector-footer">
+      <form method="post" action="{{ url_for('admin_sector_credentials', sector=sector) }}" data-confirm="Generar mensaje para mentor" data-confirm-message="Se actualizarán las contraseñas de los líderes de {{ sector }} y se generará un mensaje para el mentor.">
+        <button class="btn soft sector-message-btn" type="submit"><span class="icon chat"></span>Mensaje para mentor</button>
+      </form>
+    </div>
+    {% endif %}
   </details>
   {% else %}
   <div class="empty panel">No hay células con esos filtros.</div>

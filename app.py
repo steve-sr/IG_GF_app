@@ -628,7 +628,15 @@ def admin_cells():
         grouped.setdefault(cell_sector_label(c), []).append(c)
     grouped = {k:v for k,v in grouped.items() if v}
 
-    return render_template('admin/cells.html', cells=cells, grouped_cells=grouped, q=q, sector_filter=sector_filter, status_filter=status_filter, type_filter=type_filter, sort=sort, direction=direction)
+    sector_generated = None
+    if session.get('sector_credentials_message'):
+        sector_generated = {
+            'sector': session.pop('sector_credentials_sector', ''),
+            'body': session.pop('sector_credentials_message', ''),
+            'whatsapp_url': session.pop('sector_credentials_whatsapp', '')
+        }
+
+    return render_template('admin/cells.html', cells=cells, grouped_cells=grouped, q=q, sector_filter=sector_filter, status_filter=status_filter, type_filter=type_filter, sort=sort, direction=direction, sector_generated=sector_generated)
 
 @app.route('/admin/cells/new', methods=['GET','POST'])
 @login_required
@@ -694,6 +702,45 @@ def fill_cell(c, form):
     if c.latitude is not None and c.longitude is not None:
         c.google_maps_url = c.google_maps_url or maps_url(c.latitude, c.longitude)
         c.waze_url = c.waze_url or waze_url(c.latitude, c.longitude)
+
+
+@app.route('/admin/sectors/<path:sector>/credentials', methods=['POST'])
+@login_required
+@admin_required
+def admin_sector_credentials(sector):
+    sector = sector if sector in SECTORS else 'Sin sector'
+    leaders = User.query.filter_by(role='leader', sector=sector, active=True).order_by(User.name.asc()).all()
+    mentor = User.query.filter_by(role='mentor', sector=sector, active=True).order_by(User.name.asc()).first()
+
+    if not leaders:
+        flash(f'No hay líderes activos en {sector}.', 'danger')
+        return redirect(url_for('admin_cells', sector=sector if sector != 'Sin sector' else ''))
+
+    lines = []
+    for leader in leaders:
+        digits = clean_phone(leader.phone)
+        password = (digits or 'H0sann4') + '!'
+        leader.set_password(password)
+        leader.current_session_token = None
+        lines.append(f'{leader.name}\nUsuario: {leader.username}\nContraseña: {password}')
+
+    db.session.commit()
+
+    mentor_intro = mentor.name.title() if mentor else 'mentor'
+    body = (
+        f'Hola {mentor_intro}. Bendiciones.\n\n'
+        f'Te comparto los accesos actualizados de los líderes de {sector}. '
+        f'Por favor ayudanos a hacerlos llegar a cada líder para que pueda ingresar y completar la información de su célula.\n\n'
+        f'Acceso: {APP_PUBLIC_URL}/login\n\n'
+        + '\n\n'.join(lines) +
+        '\n\nMuchas gracias por servir con excelencia.'
+    )
+
+    session['sector_credentials_sector'] = sector
+    session['sector_credentials_message'] = body
+    session['sector_credentials_whatsapp'] = wa_message_link(mentor.phone, body) if mentor and mentor.phone else ''
+    flash(f'Mensaje de accesos generado para {sector}. Las contraseñas de esos líderes fueron actualizadas.', 'success')
+    return redirect(url_for('admin_cells', sector=sector if sector != 'Sin sector' else ''))
 
 
 @app.route('/admin/cells/<int:cell_id>/delete', methods=['POST'])
