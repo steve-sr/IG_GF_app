@@ -18,6 +18,31 @@
   </div>
 </section>
 
+
+{% if instagram_posts %}
+<section class="shell home-section instagram-home fade-up delay-1" id="instagram">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Instagram</p>
+      <h2>Últimas publicaciones</h2>
+      <p>Contenido reciente de nuestra cuenta oficial.</p>
+    </div>
+    <a class="btn ghost" target="_blank" rel="noopener" href="https://www.instagram.com/hosannaigle/">Ver Instagram</a>
+  </div>
+  <div class="ig-slider" aria-label="Últimas publicaciones de Instagram">
+    {% for post in instagram_posts %}
+      <a class="ig-post-card" href="{{ post.permalink }}" target="_blank" rel="noopener">
+        <img src="{{ post.image_url }}" alt="{{ post.title }}" loading="lazy">
+        <div class="ig-post-overlay">
+          <span>{{ 'Reel' if post.media_type == 'VIDEO' else 'Instagram' }}</span>
+          <strong>{{ post.title }}</strong>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 {% if events %}
 <section class="shell home-section fade-up delay-1" id="eventos">
   <div class="section-head">

@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from functools import wraps
 from urllib.parse import quote_plus
 
+import requests
+
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -21,6 +23,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 APP_PUBLIC_URL = os.getenv('APP_BASE_URL') or os.getenv('APP_PUBLIC_URL') or 'https://celulas.hosannaigle.com'
 APP_PUBLIC_URL = APP_PUBLIC_URL.rstrip('/')
+
+IG_ACCESS_TOKEN = os.getenv('INSTAGRAM_ACCESS_TOKEN') or os.getenv('IG_ACCESS_TOKEN')
+IG_POST_LIMIT = int(os.getenv('INSTAGRAM_POST_LIMIT', '8'))
+IG_GRAPH_URL = os.getenv('INSTAGRAM_GRAPH_URL', 'https://graph.instagram.com/me/media')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -285,6 +291,50 @@ def send_sms(to, body):
     except Exception as e:
         return False, f'No se pudo enviar SMS: {e}'
 
+
+
+def fetch_instagram_posts():
+    """Trae publicaciones reales de Instagram usando el token oficial de Meta.
+    Si no hay token o la API falla, devuelve lista vacía para no romper el home.
+    """
+    token = os.getenv('INSTAGRAM_ACCESS_TOKEN') or os.getenv('IG_ACCESS_TOKEN')
+    if not token:
+        return []
+    try:
+        fields = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp'
+        response = requests.get(
+            os.getenv('INSTAGRAM_GRAPH_URL', 'https://graph.instagram.com/me/media'),
+            params={
+                'fields': fields,
+                'limit': int(os.getenv('INSTAGRAM_POST_LIMIT', '8')),
+                'access_token': token,
+            },
+            timeout=8,
+        )
+        response.raise_for_status()
+        items = response.json().get('data', [])
+        posts = []
+        for item in items:
+            media_type = item.get('media_type', '')
+            image_url = item.get('thumbnail_url') if media_type == 'VIDEO' else item.get('media_url')
+            if not image_url:
+                image_url = item.get('media_url')
+            if not image_url or not item.get('permalink'):
+                continue
+            caption = (item.get('caption') or '').strip()
+            posts.append({
+                'caption': caption,
+                'title': caption.split('\n')[0][:92] if caption else 'Publicación de Instagram',
+                'image_url': image_url,
+                'permalink': item.get('permalink'),
+                'media_type': media_type,
+                'timestamp': item.get('timestamp'),
+            })
+        return posts
+    except Exception as exc:
+        app.logger.warning('No se pudieron cargar publicaciones de Instagram: %s', exc)
+        return []
+
 def validate_cell_form(form):
     errors = []
     required = {'name':'Nombre de la célula','barrio':'Barrio','address':'Dirección','day':'Día','time':'Hora'}
@@ -332,7 +382,8 @@ def enforce_session_security():
 @app.route('/')
 def public_home():
     events = ChurchEvent.query.filter_by(active=True).order_by(ChurchEvent.created_at.desc()).limit(6).all()
-    return render_template('home.html', events=events)
+    instagram_posts = fetch_instagram_posts()
+    return render_template('home.html', events=events, instagram_posts=instagram_posts)
 
 
 @app.route('/gratitud')

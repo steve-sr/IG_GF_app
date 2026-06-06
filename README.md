@@ -39,3 +39,15 @@ APP_BASE_URL=https://celulas.hosannaigle.com
 ```
 
 El botón de WhatsApp para compartir credenciales usa esta URL y el teléfono del líder.
+
+
+## Instagram automático
+
+Configurar en Render:
+
+```env
+INSTAGRAM_ACCESS_TOKEN=token_de_meta
+INSTAGRAM_POST_LIMIT=8
+```
+
+El token no debe guardarse en GitHub ni en el código.
