@@ -840,6 +840,547 @@ def migrate_usernames():
                 conn.execute(text('UPDATE user SET username=:username WHERE id=:id'), {'username': candidate, 'id': row['id']})
     print('Migración de usuarios completada.')
 
+
+BULK_LEADERS_IMPORT_DATA = [
+    {
+        "name": "GRADELI DUARTE",
+        "barrio": "LA GUARIA",
+        "phone": "8588-0490",
+        "username": "GRADELI.DUARTE",
+        "password": "85880490!",
+        "observation": null
+    },
+    {
+        "name": "JANNET MIRANDA",
+        "barrio": "INVU 2",
+        "phone": "6001-0329",
+        "username": "JANNET.MIRANDA",
+        "password": "60010329!",
+        "observation": null
+    },
+    {
+        "name": "MARITZA UGARTE",
+        "barrio": "LA GUARIA",
+        "phone": "8593-9497",
+        "username": "MARITZA.UGARTE",
+        "password": "85939497!",
+        "observation": null
+    },
+    {
+        "name": "ERIKA ACEVEDO",
+        "barrio": "MORACIA",
+        "phone": "8702-9708",
+        "username": "ERIKA.ACEVEDO",
+        "password": "87029708!",
+        "observation": null
+    },
+    {
+        "name": "JOSE ANGEL SALAZAR",
+        "barrio": "RESIDENCIAL DEL RIO",
+        "phone": "8443-6772",
+        "username": "JOSE.SALAZAR",
+        "password": "84436772!",
+        "observation": null
+    },
+    {
+        "name": "LEONARDO ALVAREZ",
+        "barrio": "MORACIA",
+        "phone": "8550-6266",
+        "username": "LEONARDO.ALVAREZ",
+        "password": "85506266!",
+        "observation": null
+    },
+    {
+        "name": "ROYMAN VALENCIA",
+        "barrio": "BRASILIA",
+        "phone": "6486-4275",
+        "username": "ROYMAN.VALENCIA",
+        "password": "64864275!",
+        "observation": null
+    },
+    {
+        "name": "KENNETH CENTENO",
+        "barrio": "PUEBLO NUEVO",
+        "phone": "8666-5560",
+        "username": "KENNETH.CENTENO",
+        "password": "86665560!",
+        "observation": null
+    },
+    {
+        "name": "GIOCONDA DE LA SEGURA LOPEZ",
+        "barrio": "SAN ROQUE",
+        "phone": "8424-7460",
+        "username": "GIOCONDA.LOPEZ",
+        "password": "84247460!",
+        "observation": null
+    },
+    {
+        "name": "ROBERT TALAVERA",
+        "barrio": "SANTA LUISA",
+        "phone": "6043-2882",
+        "username": "ROBERT.TALAVERA",
+        "password": "60432882!",
+        "observation": null
+    },
+    {
+        "name": "LINETH RUBIO",
+        "barrio": "LA GUARIA",
+        "phone": "8844-7735",
+        "username": "LINETH.RUBIO",
+        "password": "88447735!",
+        "observation": null
+    },
+    {
+        "name": "JONATHAN MORENO",
+        "barrio": "LA GALLERA",
+        "phone": "8328-7691",
+        "username": "JONATHAN.MORENO",
+        "password": "83287691!",
+        "observation": null
+    },
+    {
+        "name": "ROLAND GARCIA",
+        "barrio": "MORACIA",
+        "phone": "8787-9497",
+        "username": "ROLAND.GARCIA",
+        "password": "87879497!",
+        "observation": null
+    },
+    {
+        "name": "GILBERTH ORDONEZ",
+        "barrio": "CORAZON DE JESUS / SAN ANTONIO",
+        "phone": "8826-0133",
+        "username": "GILBERTH.ORDONEZ",
+        "password": "88260133!",
+        "observation": null
+    },
+    {
+        "name": "HECTOR CABALCETA",
+        "barrio": "LA GUARIA",
+        "phone": "7290-9807",
+        "username": "HECTOR.CABALCETA",
+        "password": "72909807!",
+        "observation": null
+    },
+    {
+        "name": "SOBEIDA OBANDO",
+        "barrio": "LOS ANGELES",
+        "phone": "8525-2228",
+        "username": "SOBEIDA.OBANDO",
+        "password": "85252228!",
+        "observation": null
+    },
+    {
+        "name": "LUIS CHAVES",
+        "barrio": "FELIPE PEREZ",
+        "phone": "8826-6293",
+        "username": "LUIS.CHAVES",
+        "password": "88266293!",
+        "observation": null
+    },
+    {
+        "name": "WENDY SANDOVAL",
+        "barrio": "DANIEL ODUBER",
+        "phone": "7225-3984",
+        "username": "WENDY.SANDOVAL",
+        "password": "72253984!",
+        "observation": null
+    },
+    {
+        "name": "VANESSA TORRES",
+        "barrio": "RESIDENCIAL DEL RIO",
+        "phone": "8677-6468",
+        "username": "VANESSA.TORRES",
+        "password": "86776468!",
+        "observation": null
+    },
+    {
+        "name": "GUSTAVO CASTILLO",
+        "barrio": "MORACIA",
+        "phone": "8811-8073",
+        "username": "GUSTAVO.CASTILLO",
+        "password": "88118073!",
+        "observation": null
+    },
+    {
+        "name": "ANDREI CASTRO",
+        "barrio": "LA CARRETA",
+        "phone": "8760-8356",
+        "username": "ANDREI.CASTRO",
+        "password": "87608356!",
+        "observation": null
+    },
+    {
+        "name": "RANDALL CORTES",
+        "barrio": "EL PELONCITO",
+        "phone": "7046-0451",
+        "username": "RANDALL.CORTES",
+        "password": "70460451!",
+        "observation": null
+    },
+    {
+        "name": "DAVID HERNANDEZ",
+        "barrio": "LA VICTORIA",
+        "phone": "8413-4946",
+        "username": "DAVID.HERNANDEZ",
+        "password": "84134946!",
+        "observation": null
+    },
+    {
+        "name": "YORHANY RAMIREZ",
+        "barrio": "LOS ALMENDRALES",
+        "phone": "8941-6174",
+        "username": "YORHANY.RAMIREZ",
+        "password": "89416174!",
+        "observation": null
+    },
+    {
+        "name": "JEREMY PINA",
+        "barrio": "EL PELONCITO",
+        "phone": "8754-9785",
+        "username": "JEREMY.PINA",
+        "password": "87549785!",
+        "observation": null
+    },
+    {
+        "name": "ANGELICA PEREZ",
+        "barrio": "FELIPE PEREZ",
+        "phone": "7287-9236",
+        "username": "ANGELICA.PEREZ",
+        "password": "72879236!",
+        "observation": null
+    },
+    {
+        "name": "ISTELYN MARCHENA",
+        "barrio": "LA VICTORIA",
+        "phone": "8720-9378",
+        "username": "ISTELYN.MARCHENA",
+        "password": "87209378!",
+        "observation": null
+    },
+    {
+        "name": "RICHARD SANTANA",
+        "barrio": "PEDRO HERNANDEZ",
+        "phone": "8495-3414",
+        "username": "RICHARD.SANTANA",
+        "password": "84953414!",
+        "observation": null
+    },
+    {
+        "name": "DANILO GUTIERREZ",
+        "barrio": "NAZARET",
+        "phone": "6079-5230",
+        "username": "DANILO.GUTIERREZ",
+        "password": "60795230!",
+        "observation": null
+    },
+    {
+        "name": "ANGELICA QUINTERO",
+        "barrio": "LA GUARIA",
+        "phone": "7262-3899",
+        "username": "ANGELICA.QUINTERO",
+        "password": "72623899!",
+        "observation": null
+    },
+    {
+        "name": "SARA SALAZAR",
+        "barrio": "FELIPE PEREZ",
+        "phone": "8884-7731",
+        "username": "SARA.SALAZAR",
+        "password": "88847731!",
+        "observation": null
+    },
+    {
+        "name": "CRISTOPHER CASTILLO",
+        "barrio": "MORACIA",
+        "phone": "7298-1478",
+        "username": "CRISTOPHER.CASTILLO",
+        "password": "72981478!",
+        "observation": null
+    },
+    {
+        "name": "ABIGAIL VARGAS",
+        "barrio": "FELIPE PEREZ",
+        "phone": "8584-5351",
+        "username": "ABIGAIL.VARGAS",
+        "password": "85845351!",
+        "observation": null
+    },
+    {
+        "name": "CECI RODRIGUEZ",
+        "barrio": "PUEBLO NUEVO",
+        "phone": "6327-9935",
+        "username": "CECI.RODRIGUEZ",
+        "password": "63279935!",
+        "observation": null
+    },
+    {
+        "name": "FERNANDA FONSECA",
+        "barrio": "SAN ROQUE",
+        "phone": "6123-1307",
+        "username": "FERNANDA.FONSECA",
+        "password": "61231307!",
+        "observation": null
+    },
+    {
+        "name": "PAUL DE TRINIDAD",
+        "barrio": "LAS PALMAS 1 CANAS",
+        "phone": "6057-2369",
+        "username": "PAUL.TRINIDAD",
+        "password": "60572369!",
+        "observation": null
+    },
+    {
+        "name": "ALLISON CAMPOS",
+        "barrio": "CHOROTEGA",
+        "phone": "8325-1664",
+        "username": "ALLISON.CAMPOS",
+        "password": "83251664!",
+        "observation": null
+    },
+    {
+        "name": "MAYELA CHAVARRIA",
+        "barrio": "SAN ROQUE",
+        "phone": "8732-6608",
+        "username": "MAYELA.CHAVARRIA",
+        "password": "87326608!",
+        "observation": null
+    },
+    {
+        "name": "ANGELA LOPEZ",
+        "barrio": "EL CAMBALACHE",
+        "phone": "7142-6027",
+        "username": "ANGELA.LOPEZ",
+        "password": "71426027!",
+        "observation": null
+    },
+    {
+        "name": "CHRISTOPHER",
+        "barrio": "CORAZON DE JESUS",
+        "phone": "7085-9427",
+        "username": "CHRISTOPHER",
+        "password": "70859427!",
+        "observation": "REVISAR APELLIDO"
+    },
+    {
+        "name": "ESTEBAN LOPEZ",
+        "barrio": "SIN DIRECCION",
+        "phone": null,
+        "username": "ESTEBAN.LOPEZ",
+        "password": "Hosanna2026!",
+        "observation": "SIN TELEFONO PARA CONTRASENA"
+    },
+    {
+        "name": "JOHN ESPINOSA",
+        "barrio": "FELIPE PEREZ",
+        "phone": "8946-2702",
+        "username": "JOHN.ESPINOSA",
+        "password": "89462702!",
+        "observation": null
+    },
+    {
+        "name": "OLGER CORTES",
+        "barrio": "LINDA VISTA",
+        "phone": "6206-6042",
+        "username": "OLGER.CORTES",
+        "password": "62066042!",
+        "observation": null
+    },
+    {
+        "name": "SOFIA ALVAREZ",
+        "barrio": "MORACIA",
+        "phone": "6212-2133",
+        "username": "SOFIA.ALVAREZ",
+        "password": "62122133!",
+        "observation": null
+    },
+    {
+        "name": "ELEONORA MOLINA",
+        "barrio": "FELIPE PEREZ",
+        "phone": "6057-2379",
+        "username": "ELEONORA.MOLINA",
+        "password": "60572379!",
+        "observation": null
+    },
+    {
+        "name": "CARLOS BERMUDEZ",
+        "barrio": "LA HULERA",
+        "phone": null,
+        "username": "CARLOS.BERMUDEZ",
+        "password": "Hosanna2026!",
+        "observation": "SIN TELEFONO PARA CONTRASENA"
+    },
+    {
+        "name": "FABIAN PRENDAS",
+        "barrio": "LA CRUZ",
+        "phone": "6400-3113",
+        "username": "FABIAN.PRENDAS",
+        "password": "64003113!",
+        "observation": null
+    },
+    {
+        "name": "VICTORIA REYES",
+        "barrio": "EL GALLO",
+        "phone": "8388-5904",
+        "username": "VICTORIA.REYES",
+        "password": "83885904!",
+        "observation": null
+    },
+    {
+        "name": "MINOR TALAVERA",
+        "barrio": "PIJIJE",
+        "phone": "8910-4270",
+        "username": "MINOR.TALAVERA",
+        "password": "89104270!",
+        "observation": null
+    },
+    {
+        "name": "ELI MENDEZ",
+        "barrio": "LOMA BONITA DE BELEN",
+        "phone": "8372-2747",
+        "username": "ELI.MENDEZ",
+        "password": "83722747!",
+        "observation": null
+    },
+    {
+        "name": "MARJORIE BUSTOS",
+        "barrio": "SANTA CRUZ",
+        "phone": "8779-4327",
+        "username": "MARJORIE.BUSTOS",
+        "password": "87794327!",
+        "observation": null
+    },
+    {
+        "name": "JEISON ROJAS",
+        "barrio": "LA GUARIA",
+        "phone": "8971-4837",
+        "username": "JEISON.ROJAS",
+        "password": "89714837!",
+        "observation": null
+    },
+    {
+        "name": "YENIER ORTIZ",
+        "barrio": "SIN DIRECCION",
+        "phone": "7043-7674",
+        "username": "YENIER.ORTIZ",
+        "password": "70437674!",
+        "observation": null
+    },
+    {
+        "name": "ELIAS AGUILAR",
+        "barrio": "LA GALLERA",
+        "phone": "6323-8586",
+        "username": "ELIAS.AGUILAR",
+        "password": "63238586!",
+        "observation": null
+    }
+]
+
+def normalize_import_username(value):
+    return slug_username(value or '')
+
+def title_name(value):
+    return ' '.join([p.capitalize() for p in (value or '').strip().split()])
+
+def normalize_import_barrio(value):
+    raw = (value or '').strip()
+    if not raw or raw.upper() == 'SIN DIRECCION':
+        return 'Otro', 'Por definir'
+    # Si existe en la lista oficial, usarlo directo manteniendo formato título.
+    for b in BARRIOS_LIBERIA:
+        if b.lower() == raw.lower():
+            return b, None
+    return 'Otro', title_name(raw)
+
+@app.cli.command('import-leaders-cells')
+def import_leaders_cells():
+    """Importa líderes y crea células esqueleto desde la base inicial.
+    Es idempotente: si se ejecuta otra vez, actualiza sin duplicar por usuario/líder.
+    """
+    db.create_all()
+    created_users = updated_users = created_cells = updated_cells = 0
+    skipped = []
+
+    for row in BULK_LEADERS_IMPORT_DATA:
+        name = title_name(row.get('name'))
+        username = normalize_import_username(row.get('username') or name)
+        phone = format_cr_phone(row.get('phone')) if row.get('phone') else None
+        password = row.get('password') or 'Hosanna2026!'
+        barrio, barrio_other = normalize_import_barrio(row.get('barrio'))
+
+        if not name or not username:
+            skipped.append(row)
+            continue
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            user = User(
+                name=name,
+                username=username,
+                email=None,
+                phone=phone,
+                role='leader',
+                active=True,
+            )
+            user.set_password(password)
+            db.session.add(user)
+            db.session.flush()
+            created_users += 1
+        else:
+            user.name = name
+            user.phone = phone
+            user.role = 'leader'
+            user.active = True
+            # Reaplica la contraseña del Excel para que las credenciales queden exactas.
+            user.set_password(password)
+            updated_users += 1
+
+        cell_name = f'Célula {name}'
+        cell = Cell.query.filter_by(leader_id=user.id).first()
+        if not cell:
+            cell = Cell(
+                name=cell_name,
+                leader_id=user.id,
+                barrio=barrio,
+                barrio_other=barrio_other,
+                address='Dirección por definir',
+                day='Por definir',
+                time='Por definir',
+                phone=phone,
+                description='Grupo familiar pendiente de completar información.',
+                status='paused',
+            )
+            db.session.add(cell)
+            created_cells += 1
+        else:
+            cell.name = cell.name or cell_name
+            cell.leader_id = user.id
+            cell.barrio = barrio
+            cell.barrio_other = barrio_other
+            cell.phone = cell.phone or phone
+            if not cell.address or cell.address in ['None', '']:
+                cell.address = 'Dirección por definir'
+            if not cell.day:
+                cell.day = 'Por definir'
+            if not cell.time:
+                cell.time = 'Por definir'
+            if not cell.description:
+                cell.description = 'Grupo familiar pendiente de completar información.'
+            # No sobreescribir status si ya fue activada por admin/líder.
+            cell.status = cell.status or 'paused'
+            updated_cells += 1
+
+    db.session.commit()
+    print(f'Importación completada.')
+    print(f'Líderes creados: {created_users}')
+    print(f'Líderes actualizados: {updated_users}')
+    print(f'Células creadas: {created_cells}')
+    print(f'Células actualizadas: {updated_cells}')
+    print(f'Omitidos: {len(skipped)}')
+    if skipped:
+        print(skipped)
+
+
 @app.errorhandler(403)
 def e403(e): return render_template('errors/error.html', code=403, title='Acceso restringido', message='No tenés permiso para entrar a esta sección.'),403
 @app.errorhandler(404)
