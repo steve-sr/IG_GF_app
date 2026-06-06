@@ -44,8 +44,20 @@ BARRIOS_LIBERIA = [
 ]
 
 
-SECTORS = ['Sector 1','Sector 2','Sector 3','Sector 4','Sector 5','Sin sector']
+SECTORS = [f'Sector {i}' for i in range(1, 11)] + ['Sin sector']
 CELL_TYPES = [('adultos','Adultos'),('jovenes','Jóvenes'),('ambos','Adultos y jóvenes')]
+
+def normalize_sector(value):
+    value = (value or '').strip()
+    return value if value in SECTORS and value != 'Sin sector' else None
+
+def user_sector_label(user):
+    return getattr(user, 'sector', None) or 'Sin sector'
+
+def cell_sector_label(cell):
+    if getattr(cell, 'leader', None) and getattr(cell.leader, 'sector', None):
+        return cell.leader.sector
+    return 'Sin sector'
 
 def safe_text(value, fallback='Por definir'):
     raw = '' if value is None else str(value).strip()
@@ -422,7 +434,7 @@ def validate_cell_form(form):
 
 @app.context_processor
 def inject_globals():
-    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, SECTORS=SECTORS, CELL_TYPES=CELL_TYPES, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager, display_barrio=display_barrio, status_label=status_label, cell_type_label=cell_type_label, get_mentor=get_mentor)
+    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, SECTORS=SECTORS, CELL_TYPES=CELL_TYPES, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager, display_barrio=display_barrio, status_label=status_label, cell_type_label=cell_type_label, get_mentor=get_mentor, cell_sector_label=cell_sector_label, user_sector_label=user_sector_label)
 
 
 @app.before_request
@@ -563,12 +575,60 @@ def admin_dashboard():
 @login_required
 @manager_required
 def admin_cells():
+    q = (request.args.get('q') or '').strip().lower()
+    sector_filter = (request.args.get('sector') or '').strip()
+    status_filter = (request.args.get('status') or '').strip()
+    type_filter = (request.args.get('cell_type') or '').strip()
+    sort = (request.args.get('sort') or 'sector').strip()
+    direction = (request.args.get('dir') or 'asc').strip()
+
     if current_user.role == 'mentor':
         leader_ids = [u.id for u in User.query.filter_by(role='leader', mentor_id=current_user.id).all()]
-        cells = Cell.query.filter(Cell.leader_id.in_(leader_ids)).order_by(Cell.created_at.desc()).all() if leader_ids else []
+        cells = Cell.query.filter(Cell.leader_id.in_(leader_ids)).all() if leader_ids else []
     else:
-        cells = Cell.query.order_by(Cell.created_at.desc()).all()
-    return render_template('admin/cells.html', cells=cells)
+        cells = Cell.query.all()
+
+    def matches(c):
+        if q:
+            haystack = ' '.join([
+                safe_text(c.name, ''), safe_text(display_barrio(c), ''), safe_text(c.address, ''),
+                safe_text(c.day, ''), safe_text(c.time, ''), safe_text(c.status, ''),
+                safe_text(c.leader.name if c.leader else '', ''), safe_text(cell_sector_label(c), '')
+            ]).lower()
+            if q not in haystack:
+                return False
+        if sector_filter and sector_filter != 'Todos' and cell_sector_label(c) != sector_filter:
+            return False
+        if status_filter and status_filter != 'Todos' and c.status != status_filter:
+            return False
+        if type_filter and type_filter != 'Todos' and (c.cell_type or 'adultos') != type_filter:
+            return False
+        return True
+
+    cells = [c for c in cells if matches(c)]
+
+    def sort_key(c):
+        keys = {
+            'name': safe_text(c.name, '').lower(),
+            'barrio': safe_text(display_barrio(c), '').lower(),
+            'leader': safe_text(c.leader.name if c.leader else '', '').lower(),
+            'status': safe_text(c.status, '').lower(),
+            'type': safe_text(c.cell_type, '').lower(),
+            'day': f'{safe_text(c.day, '')} {safe_text(c.time, '')}',
+            'sector': cell_sector_label(c),
+        }
+        return keys.get(sort, keys['sector'])
+
+    cells = sorted(cells, key=sort_key, reverse=(direction == 'desc'))
+
+    grouped = {}
+    for sector in SECTORS:
+        grouped[sector] = []
+    for c in cells:
+        grouped.setdefault(cell_sector_label(c), []).append(c)
+    grouped = {k:v for k,v in grouped.items() if v}
+
+    return render_template('admin/cells.html', cells=cells, grouped_cells=grouped, q=q, sector_filter=sector_filter, status_filter=status_filter, type_filter=type_filter, sort=sort, direction=direction)
 
 @app.route('/admin/cells/new', methods=['GET','POST'])
 @login_required
@@ -672,11 +732,36 @@ def admin_leaders():
             sent, sms_msg = send_sms(phone, body); flash(sms_msg, 'success' if sent else 'warning')
         generated={'name':name,'username':username,'email':email,'password':password,'phone':phone,'body':body,'sent':sent,'whatsapp_url':credentials_whatsapp_url}
         flash(('Mentor' if role == 'mentor' else 'Líder') + ' creado correctamente.', 'success')
+    q = (request.args.get('q') or '').strip().lower()
+    sector_filter = (request.args.get('sector') or '').strip()
+    role_filter = (request.args.get('role') or '').strip()
+    sort = (request.args.get('sort') or 'name').strip()
+    direction = (request.args.get('dir') or 'asc').strip()
     if current_user.role == 'mentor':
-        leaders = User.query.filter_by(role='leader', mentor_id=current_user.id).order_by(User.created_at.desc()).all()
+        leaders = User.query.filter_by(role='leader', mentor_id=current_user.id).all()
     else:
-        leaders = User.query.filter(User.role.in_(['leader','mentor'])).order_by(User.created_at.desc()).all()
-    return render_template('admin/leaders.html', leaders=leaders, mentors=mentors, generated=generated)
+        leaders = User.query.filter(User.role.in_(['leader','mentor'])).all()
+
+    def matches(u):
+        if q:
+            haystack = ' '.join([safe_text(u.name,''), safe_text(u.username,''), safe_text(u.phone,''), safe_text(u.email,''), safe_text(u.sector,'')]).lower()
+            if q not in haystack:
+                return False
+        if sector_filter and sector_filter != 'Todos' and user_sector_label(u) != sector_filter:
+            return False
+        if role_filter and role_filter != 'Todos' and u.role != role_filter:
+            return False
+        return True
+    leaders = [u for u in leaders if matches(u)]
+    def sort_key(u):
+        keys = {
+            'name': safe_text(u.name,'').lower(), 'username': safe_text(u.username,'').lower(), 'role': safe_text(u.role,'').lower(),
+            'sector': user_sector_label(u), 'mentor': safe_text(get_mentor(u).name if get_mentor(u) else '', '').lower(),
+            'phone': safe_text(u.phone,'').lower(), 'status': '1' if u.active else '0'
+        }
+        return keys.get(sort, keys['name'])
+    leaders = sorted(leaders, key=sort_key, reverse=(direction == 'desc'))
+    return render_template('admin/leaders.html', leaders=leaders, mentors=mentors, generated=generated, q=q, sector_filter=sector_filter, role_filter=role_filter, sort=sort, direction=direction)
 
 
 
@@ -768,6 +853,69 @@ def admin_leader_delete(leader_id):
     db.session.commit()
     flash('Líder eliminado correctamente. Sus células quedaron sin líder asignado.', 'success')
     return redirect(url_for('admin_leaders'))
+
+
+@app.route('/admin/mentors', methods=['GET','POST'])
+@login_required
+@admin_required
+def admin_mentors():
+    if request.method == 'POST':
+        mentor_id = request.form.get('mentor_id')
+        sector = normalize_sector(request.form.get('sector'))
+        leader_ids = request.form.getlist('leader_ids')
+        if not mentor_id or not leader_ids:
+            flash('Seleccioná un mentor y al menos un líder.', 'danger')
+            return redirect(url_for('admin_mentors'))
+        mentor = User.query.filter_by(id=int(mentor_id), role='mentor').first_or_404()
+        mentor.sector = sector or mentor.sector
+        leaders = User.query.filter(User.id.in_([int(x) for x in leader_ids]), User.role == 'leader').all()
+        for leader in leaders:
+            leader.mentor_id = mentor.id
+            leader.sector = sector or mentor.sector or leader.sector
+        db.session.commit()
+        flash(f'{len(leaders)} líder(es) asignados a {mentor.name}.', 'success')
+        return redirect(url_for('admin_mentors', sector=sector or ''))
+
+    q = (request.args.get('q') or '').strip().lower()
+    sector_filter = (request.args.get('sector') or '').strip()
+    mentor_filter = request.args.get('mentor_id') or ''
+    sort = (request.args.get('sort') or 'sector').strip()
+    direction = (request.args.get('dir') or 'asc').strip()
+
+    mentors = User.query.filter_by(role='mentor').order_by(User.name.asc()).all()
+    leaders = User.query.filter_by(role='leader').all()
+
+    def matches(u):
+        if q:
+            haystack = ' '.join([safe_text(u.name,''), safe_text(u.username,''), safe_text(u.phone,''), safe_text(u.sector,''), safe_text(get_mentor(u).name if get_mentor(u) else '', '')]).lower()
+            if q not in haystack:
+                return False
+        if sector_filter and sector_filter != 'Todos' and user_sector_label(u) != sector_filter:
+            return False
+        if mentor_filter and str(u.mentor_id or '') != mentor_filter:
+            return False
+        return True
+
+    leaders = [u for u in leaders if matches(u)]
+    def sort_key(u):
+        keys = {
+            'name': safe_text(u.name,'').lower(),
+            'username': safe_text(u.username,'').lower(),
+            'sector': user_sector_label(u),
+            'mentor': safe_text(get_mentor(u).name if get_mentor(u) else '', '').lower(),
+            'cell': safe_text(u.cells[0].name if u.cells else '', '').lower(),
+        }
+        return keys.get(sort, keys['sector'])
+    leaders = sorted(leaders, key=sort_key, reverse=(direction == 'desc'))
+
+    grouped = {}
+    for sector in SECTORS:
+        grouped[sector] = []
+    for leader in leaders:
+        grouped.setdefault(user_sector_label(leader), []).append(leader)
+    grouped = {k:v for k,v in grouped.items() if v}
+    mentor_counts = {m.id: User.query.filter_by(role='leader', mentor_id=m.id).count() for m in mentors}
+    return render_template('admin/mentors.html', mentors=mentors, leaders=leaders, grouped_leaders=grouped, mentor_counts=mentor_counts, q=q, sector_filter=sector_filter, mentor_filter=mentor_filter, sort=sort, direction=direction)
 
 @app.route('/admin/events', methods=['GET','POST'])
 @login_required

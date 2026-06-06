@@ -5,7 +5,7 @@
     <h1>Líderes</h1>
     <p>Creá accesos para líderes y mentores, asigná sectores y compartí credenciales de forma segura.</p>
   </div>
-  <a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a>
+  <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a>{% if current_user.role == 'admin' %}<a class="btn ghost" href="{{ url_for('admin_mentors') }}"><span class="icon mentor"></span>Mentores</a>{% endif %}</div>
 </section>
 
 {% if generated %}
@@ -72,7 +72,19 @@
   <button class="btn primary full"><span class="icon plus"></span>Crear líder</button>
 </form>
 
-<div class="table-card shell leader-shell fade-up delay-2">
+
+<section class="panel shell leader-shell fade-up delay-2 admin-filters">
+  <form method="get" class="filters-grid compact-filters">
+    <label>Buscar<input name="q" value="{{ q or '' }}" placeholder="Nombre, usuario, teléfono..."></label>
+    <label>Sector<select name="sector"><option value="">Todos</option>{% for s in SECTORS %}<option value="{{s}}" {% if sector_filter==s %}selected{% endif %}>{{s}}</option>{% endfor %}</select></label>
+    <label>Rol<select name="role"><option value="">Todos</option><option value="leader" {% if role_filter=='leader' %}selected{% endif %}>Líder</option><option value="mentor" {% if role_filter=='mentor' %}selected{% endif %}>Mentor</option></select></label>
+    <label>Ordenar<select name="sort"><option value="name" {% if sort=='name' %}selected{% endif %}>Nombre</option><option value="username" {% if sort=='username' %}selected{% endif %}>Usuario</option><option value="role" {% if sort=='role' %}selected{% endif %}>Rol</option><option value="sector" {% if sort=='sector' %}selected{% endif %}>Sector</option><option value="mentor" {% if sort=='mentor' %}selected{% endif %}>Mentor</option><option value="phone" {% if sort=='phone' %}selected{% endif %}>Teléfono</option></select></label>
+    <label>Dirección<select name="dir"><option value="asc" {% if direction=='asc' %}selected{% endif %}>Ascendente</option><option value="desc" {% if direction=='desc' %}selected{% endif %}>Descendente</option></select></label>
+    <button class="btn primary" type="submit"><span class="icon search"></span>Filtrar</button><a class="btn ghost" href="{{ url_for('admin_leaders') }}">Limpiar</a>
+  </form>
+</section>
+
+<div class="table-card shell leader-shell fade-up delay-3">
   <table class="leaders-table">
     <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Sector</th><th>Mentor</th><th>Célula asignada</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
     {% for l in leaders %}

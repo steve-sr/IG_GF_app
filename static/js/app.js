@@ -195,3 +195,15 @@ document.addEventListener('click', async (e)=>{
     btn.setAttribute('aria-expanded','false');
   });
 })();
+
+// Bulk checkbox helpers for mentor assignment.
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-check-all]');
+  if(!btn) return;
+  const name = btn.getAttribute('data-check-all');
+  const boxes = Array.from(document.querySelectorAll(`input[type="checkbox"][name="${name}"]`));
+  if(!boxes.length) return;
+  const shouldCheck = boxes.some(b=>!b.checked);
+  boxes.forEach(b=>{ b.checked = shouldCheck; });
+  btn.textContent = shouldCheck ? 'Quitar selección' : 'Seleccionar visibles';
+});

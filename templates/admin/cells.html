@@ -1,35 +1,62 @@
 {% extends 'base.html' %}{% block content %}
 <section class="dash-head shell fade-up">
   <div>
-    <p class="eyebrow">{{ 'Admin' if current_user.role == 'admin' else 'Mentor' }}</p><h1>Células</h1>
-    <p>Control general de grupos familiares, líderes y estado de ubicación.</p>
+    <p class="eyebrow">{{ 'Admin' if current_user.role == 'admin' else 'Mentor' }}</p>
+    <h1>Células</h1>
+    <p>Vista agrupada por sector, con búsqueda, filtros y ordenamiento para evitar desorden operativo.</p>
   </div>
   <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a><a class="btn primary" href="{{ url_for('admin_cell_new') }}"><span class="icon plus"></span>Nueva célula</a></div>
 </section>
-<div class="table-card shell fade-up delay-1">
-  <table>
-    <tr><th>Nombre</th><th>Barrio</th><th>Tipo</th><th>Día</th><th>Líder</th><th>Estado</th><th>Ubicación</th><th>Acciones</th></tr>
-    {% for c in cells %}
-    <tr>
-      <td><b>{{c.name}}</b></td>
-      <td>{{ display_barrio(c) }}</td>
-      <td><span class="mini-pill">{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span class="mini-pill soft-green">Niños</span>{% endif %}</td>
-      <td>{{c.day}} · {{c.time}}</td>
-      <td>{{c.leader.name if c.leader else '—'}}</td>
-      <td><span class="status-chip {{ c.status }}">{{ status_label(c.status) }}</span></td>
-      <td>{% if c.latitude %}<span class="distance-badge"><span class="icon location"></span>Lista</span>{% else %}<span class="pill">Pendiente</span>{% endif %}</td>
-      <td>
-        {% if current_user.role == 'admin' %}
-        <div class="row-actions">
-          <a class="btn small ghost" href="{{ url_for('admin_cell_edit', cell_id=c.id) }}">Editar</a>
-          <form method="post" action="{{ url_for('admin_cell_delete', cell_id=c.id) }}" data-confirm="Eliminar célula" data-confirm-message="Esta acción eliminará la célula {{ c.name }}. No se puede deshacer."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form>
-        </div>
-        {% else %}
-        <span class="muted">Solo lectura</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% else %}<tr><td colspan="8"><div class="empty">No hay células creadas.</div></td></tr>{% endfor %}
-  </table>
-</div>
+
+<section class="panel shell fade-up delay-1 admin-filters">
+  <form method="get" class="filters-grid">
+    <label>Buscar<input name="q" value="{{ q or '' }}" placeholder="Célula, líder, barrio..."></label>
+    <label>Sector<select name="sector"><option value="">Todos</option>{% for s in SECTORS %}<option value="{{s}}" {% if sector_filter==s %}selected{% endif %}>{{s}}</option>{% endfor %}</select></label>
+    <label>Estado<select name="status"><option value="">Todos</option><option value="active" {% if status_filter=='active' %}selected{% endif %}>Activa</option><option value="paused" {% if status_filter=='paused' %}selected{% endif %}>Pausada</option><option value="full" {% if status_filter=='full' %}selected{% endif %}>Llena</option></select></label>
+    <label>Tipo<select name="cell_type"><option value="">Todos</option>{% for value,label in CELL_TYPES %}<option value="{{value}}" {% if type_filter==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>
+    <label>Ordenar<select name="sort"><option value="sector" {% if sort=='sector' %}selected{% endif %}>Sector</option><option value="name" {% if sort=='name' %}selected{% endif %}>Nombre</option><option value="leader" {% if sort=='leader' %}selected{% endif %}>Líder</option><option value="barrio" {% if sort=='barrio' %}selected{% endif %}>Barrio</option><option value="status" {% if sort=='status' %}selected{% endif %}>Estado</option><option value="type" {% if sort=='type' %}selected{% endif %}>Tipo</option></select></label>
+    <label>Dirección<select name="dir"><option value="asc" {% if direction=='asc' %}selected{% endif %}>Ascendente</option><option value="desc" {% if direction=='desc' %}selected{% endif %}>Descendente</option></select></label>
+    <button class="btn primary" type="submit"><span class="icon search"></span>Filtrar</button>
+    <a class="btn ghost" href="{{ url_for('admin_cells') }}">Limpiar</a>
+  </form>
+</section>
+
+<section class="shell sector-board fade-up delay-2">
+  {% for sector, sector_cells in grouped_cells.items() %}
+  <details class="sector-group" open>
+    <summary>
+      <div><strong>{{ sector }}</strong><span>{{ sector_cells|length }} célula{{ '' if sector_cells|length == 1 else 's' }}</span></div>
+      <span class="mini-pill">Ver grupo</span>
+    </summary>
+    <div class="sector-table-wrap">
+      <table class="sortable-table">
+        <thead><tr><th>Nombre</th><th>Barrio</th><th>Tipo</th><th>Día</th><th>Líder</th><th>Estado</th><th>Ubicación</th><th>Acciones</th></tr></thead>
+        <tbody>
+          {% for c in sector_cells %}
+          <tr>
+            <td><b>{{c.name}}</b><div class="mobile-sub">{{ display_barrio(c) }}</div></td>
+            <td>{{ display_barrio(c) }}</td>
+            <td><span class="mini-pill">{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span class="mini-pill soft-green">Niños</span>{% endif %}</td>
+            <td>{{c.day}} · {{c.time}}</td>
+            <td>{{c.leader.name if c.leader else '—'}}</td>
+            <td><span class="status-chip {{ c.status }}">{{ status_label(c.status) }}</span></td>
+            <td>{% if c.latitude %}<span class="distance-badge"><span class="icon location"></span>Lista</span>{% else %}<span class="pill">Pendiente</span>{% endif %}</td>
+            <td>
+              <div class="row-actions">
+                {% if current_user.role == 'admin' or (current_user.role == 'mentor' and c.leader and c.leader.mentor_id == current_user.id) %}
+                  {% if current_user.role == 'admin' %}<a class="btn small ghost" href="{{ url_for('admin_cell_edit', cell_id=c.id) }}"><span class="icon edit"></span>Editar</a>{% endif %}
+                  {% if current_user.role == 'admin' %}<form method="post" action="{{ url_for('admin_cell_delete', cell_id=c.id) }}" data-confirm="Eliminar célula" data-confirm-message="Esta acción eliminará la célula {{ c.name }}. No se puede deshacer."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form>{% endif %}
+                {% else %}<span class="muted">Solo lectura</span>{% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% else %}
+  <div class="empty panel">No hay células con esos filtros.</div>
+  {% endfor %}
+</section>
 {% endblock %}
