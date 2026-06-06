@@ -107,3 +107,5 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
   .leader-sms-row .switch{align-self:flex-start}
 }
 .credentials-actions{margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}.credentials-actions .btn{width:auto}.icon.copy::before{content:"";display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-radius:3px;box-shadow:4px -4px 0 -1px var(--surface, #fff),4px -4px 0 1px currentColor}.success-box textarea{white-space:pre-wrap;line-height:1.55}
+.icon.key{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14a5 5 0 1 1 4.58-7H22v4h-3v3h-4v-3h-3.42A5 5 0 0 1 7 14Zm0-3a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>')}
+.row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}

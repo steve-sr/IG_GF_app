@@ -406,13 +406,7 @@ def admin_leaders():
         if email and User.query.filter_by(email=email).first():
             flash('Ya existe un usuario con ese correo.', 'danger'); return redirect(url_for('admin_leaders'))
         u=User(name=name,username=username,email=email,phone=phone,role='leader',active=True); u.set_password(password); db.session.add(u); db.session.commit()
-        login_link = APP_PUBLIC_URL + url_for('login')
-        body=(
-            f'Hola {name}. Bienvenido al equipo de líderes de Iglesia Hosanna.\n\n'
-            f'Acceso:\n{login_link}\n\n'
-            f'Usuario:\n{username}\n\n'
-            f'Contraseña:\n{password}'
-        )
+        body = build_credentials_message(u, password)
         credentials_whatsapp_url = wa_message_link(phone, body) if phone else ''
         sent=False; sms_msg=''
         if request.form.get('send_sms') == 'on' and phone:
@@ -421,6 +415,32 @@ def admin_leaders():
         flash('Líder creado correctamente.', 'success')
     return render_template('admin/leaders.html', leaders=User.query.filter_by(role='leader').order_by(User.created_at.desc()).all(), generated=generated)
 
+
+
+@app.route('/admin/leaders/<int:leader_id>/credentials', methods=['POST'])
+@login_required
+@admin_required
+def admin_leader_credentials(leader_id):
+    u = User.query.get_or_404(leader_id)
+    if u.role != 'leader':
+        abort(403)
+    password = random_password()
+    u.set_password(password)
+    db.session.commit()
+    body = build_credentials_message(u, password)
+    generated = {
+        'name': u.name,
+        'username': u.username,
+        'email': u.email,
+        'password': password,
+        'phone': u.phone,
+        'body': body,
+        'sent': False,
+        'whatsapp_url': wa_message_link(u.phone, body) if u.phone else ''
+    }
+    flash('Credenciales generadas nuevamente. La contraseña anterior fue reemplazada.', 'success')
+    leaders = User.query.filter_by(role='leader').order_by(User.created_at.desc()).all()
+    return render_template('admin/leaders.html', leaders=leaders, generated=generated)
 
 @app.route('/admin/leaders/<int:leader_id>/delete', methods=['POST'])
 @login_required
@@ -549,3 +569,13 @@ def e404(e): return render_template('errors/error.html', code=404, title='Págin
 def e500(e): return render_template('errors/error.html', code=500, title='Algo falló', message='El sistema tuvo un error inesperado.'),500
 
 if __name__ == '__main__': app.run(debug=True)
+
+def build_credentials_message(user, password):
+    login_link = APP_PUBLIC_URL + url_for('login')
+    return (
+        f'Hola {user.name}. Bienvenido al equipo de líderes de Iglesia Hosanna.\n\n'
+        f'Acceso:\n{login_link}\n\n'
+        f'Usuario:\n{user.username}\n\n'
+        f'Contraseña:\n{password}'
+    )
+
