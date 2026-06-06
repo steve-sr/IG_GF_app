@@ -69,16 +69,7 @@
       <td>{{l.email or '—'}}</td>
       <td>{{l.phone or '—'}}</td>
       <td><span class="distance-badge"><span class="status-dot"></span>{{'Activo' if l.active else 'Inactivo'}}</span></td>
-      <td>
-        <div class="row-actions">
-          <form method="post" action="{{ url_for('admin_leader_credentials', leader_id=l.id) }}" data-confirm="Generar nuevas credenciales" data-confirm-message="Se generará una nueva contraseña para {{ l.name }}. La contraseña anterior dejará de funcionar.">
-            <button class="btn small ghost" type="submit"><span class="icon key"></span>Credenciales</button>
-          </form>
-          <form method="post" action="{{ url_for('admin_leader_delete', leader_id=l.id) }}" data-confirm="Eliminar líder" data-confirm-message="Se eliminará el líder {{ l.name }}. Las células asignadas quedarán sin líder.">
-            <button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button>
-          </form>
-        </div>
-      </td>
+      <td><div class="row-actions"><form method="post" action="{{ url_for('admin_leader_delete', leader_id=l.id) }}" data-confirm="Eliminar líder" data-confirm-message="Se eliminará el líder {{ l.name }}. Las células asignadas quedarán sin líder."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form></div></td>
     </tr>
     {% else %}
     <tr><td colspan="6"><div class="empty">No hay líderes registrados.</div></td></tr>
