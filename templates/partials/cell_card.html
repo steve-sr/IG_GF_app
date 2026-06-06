@@ -1,28 +1,18 @@
 <article class="card cell-card">
   <div class="card-top">
-    <div class="cell-main">
-      <h3>{{ c.name }}</h3>
-      <p class="cell-barrio">{{ display_barrio(c) }}</p>
-    </div>
+    <div class="cell-main"><h3>{{ c.name }}</h3><p class="cell-barrio">{{ display_barrio(c) }}</p></div>
     <span class="pill status-pill"><span class="status-dot"></span>{{ status_label(c.status) }} · {{ c.day }} {{ c.time }}</span>
   </div>
-
-  {% if c.distance_label is defined %}
-    <p class="distance-line"><span class="icon location"></span>{{ c.distance_label }} de tu ubicación</p>
-  {% endif %}
-
-  <p class="cell-description">{{ c.description or 'Célula disponible para integrarte.' }}</p>
-  <div class="card-tags"><span>{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span>Maestra de niños</span>{% endif %}</div>
-
+  {% if c.distance_label is defined %}<p class="distance-line"><span class="icon location"></span>{{ c.distance_label }} de tu ubicación</p>{% endif %}
+  <div class="card-tags"><span>{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span>Maestra de niños</span>{% endif %}{% if c.leader and c.leader.sector %}<span>{{ c.leader.sector }}</span>{% endif %}</div>
   <div class="meta cell-meta">
     <span><i class="icon user"></i>{{ c.leader.name if c.leader else 'Líder por asignar' }}</span>
     <span><i class="icon location"></i>{{ c.address or 'Dirección por definir' }}</span>
   </div>
-
   <div class="card-actions">
     {% if c.google_maps_url %}<a class="btn small ghost" target="_blank" rel="noopener" href="{{ c.google_maps_url }}"><span class="icon map"></span>Maps</a>{% endif %}
     {% if c.waze_url %}<a class="btn small ghost" target="_blank" rel="noopener" href="{{ c.waze_url }}"><span class="icon location"></span>Waze</a>{% endif %}
-    {% set contact_phone = c.phone or (c.leader.phone if c.leader else '') %}
+    {% set contact_phone = c.leader.phone if c.leader else '' %}
     {% if contact_phone %}<a class="btn small primary contact-btn" target="_blank" rel="noopener" href="{{ wa_link(contact_phone, c.name) }}"><span class="icon chat"></span>Contactar</a>{% endif %}
   </div>
 </article>

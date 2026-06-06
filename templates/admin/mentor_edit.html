@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% block content %}
+<section class="dash-head shell leader-page-head fade-up">
+  <div><p class="eyebrow">Admin</p><h1>Editar mentor</h1><p>Si cambiás el sector, los líderes asignados heredan el nuevo sector.</p></div>
+  <a class="btn ghost" href="{{ url_for('admin_mentors') }}"><span class="icon arrow-left"></span>Volver</a>
+</section>
+<form method="post" class="form panel smart-form shell leader-shell fade-up" novalidate>
+  <div class="form-section leader-form-section"><div class="form-section-head"><div><h3>Información del mentor</h3><p>Datos de acceso, contacto y sector.</p></div></div>
+    <div class="grid two leader-grid">
+      <label>Nombre<input name="name" required data-label="Nombre" value="{{ mentor.name }}" placeholder="Ej. Steve Solís"></label>
+      <label>Usuario<input name="username" required data-label="Usuario" data-format="username" value="{{ mentor.username }}" placeholder="Ej. steve.solis"></label>
+      <label>Sector<select name="sector" required data-label="Sector"><option value="">Sin sector</option>{% for s in SECTORS if s != 'Sin sector' %}<option value="{{s}}" {% if mentor.sector==s %}selected{% endif %}>{{s}}</option>{% endfor %}</select></label>
+      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" maxlength="9" value="{{ mentor.phone or '' }}" placeholder="Ej. 8888-8888"></label>
+      <label>Correo (opcional)<input name="email" type="email" data-label="Correo" value="{{ mentor.email or '' }}" placeholder="Ej. mentor@correo.com"></label>
+      <label>Nueva contraseña (opcional)<input name="password" data-label="Contraseña" autocomplete="new-password" placeholder="Dejar vacío para no cambiar"></label>
+    </div>
+  </div>
+  <div class="option-row compact leader-sms-row"><div><strong>Mentor activo</strong><p>Si se desactiva, no podrá iniciar sesión.</p></div><label class="switch"><input type="checkbox" name="active" {% if mentor.active %}checked{% endif %}><span></span></label></div>
+  <button class="btn primary full"><span class="icon edit"></span>Guardar cambios</button>
+</form>
+{% endblock %}

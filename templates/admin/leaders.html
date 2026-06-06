@@ -1,23 +1,25 @@
 {% extends 'base.html' %}{% block content %}
 <section class="dash-head shell leader-page-head fade-up">
   <div>
-    <p class="eyebrow">Admin</p>
+    <p class="eyebrow">{{ 'Mentor' if current_user.role == 'mentor' else 'Admin' }}</p>
     <h1>Líderes</h1>
-    <p>Creá accesos para líderes y mentores, asigná sectores y compartí credenciales de forma segura.</p>
+    <p>Creá y administrá líderes. El sector se asigna automáticamente según el mentor seleccionado.</p>
   </div>
-  <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a>{% if current_user.role == 'admin' %}<a class="btn ghost" href="{{ url_for('admin_mentors') }}"><span class="icon mentor"></span>Mentores</a>{% endif %}</div>
+  <div class="actions">
+    <a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a>
+    {% if current_user.role == 'admin' %}<a class="btn ghost" href="{{ url_for('admin_mentors') }}"><span class="icon mentor"></span>Mentores</a>{% endif %}
+    <a class="btn ghost" href="{{ url_for('admin_cells') }}"><span class="icon grid"></span>Células</a>
+  </div>
 </section>
 
 {% if generated %}
 <div class="panel success-box shell leader-shell fade-up">
-  <div class="panel-title"><div><h2>Credenciales generadas</h2><p>Guardalas o compartilas con el líder.</p></div></div>
+  <div class="panel-title"><div><h2>Credenciales generadas</h2><p>Compartilas con el líder por WhatsApp o copiá el mensaje.</p></div></div>
   <p><b>Usuario:</b> {{generated.username}}</p>
   <p><b>Contraseña:</b> {{generated.password}}</p>
   <textarea readonly>{{generated.body}}</textarea>
   <div class="card-actions credentials-actions">
-    {% if generated.whatsapp_url %}
-    <a class="btn primary" href="{{ generated.whatsapp_url }}" target="_blank" rel="noopener"><span class="icon chat"></span>Enviar por WhatsApp</a>
-    {% endif %}
+    {% if generated.whatsapp_url %}<a class="btn primary" href="{{ generated.whatsapp_url }}" target="_blank" rel="noopener"><span class="icon chat"></span>Enviar por WhatsApp</a>{% endif %}
     <button class="btn ghost" type="button" data-copy-text="{{ generated.body|e }}"><span class="icon copy"></span>Copiar mensaje</button>
   </div>
 </div>
@@ -25,60 +27,41 @@
 
 <form method="post" class="form panel smart-form shell leader-shell fade-up delay-1" novalidate>
   <div class="form-section leader-form-section">
-    <div class="form-section-head">
-      <div>
-        <h3>Información del líder</h3>
-        <p>Estos datos serán usados para iniciar sesión y contacto operativo.</p>
-      </div>
-    </div>
+    <div class="form-section-head"><div><h3>Nuevo líder</h3><p>Asigná un mentor para que el sector se complete automáticamente.</p></div></div>
     <div class="grid two leader-grid">
-      <label>Nombre
-        <input name="name" required data-label="Nombre" autocomplete="name" placeholder="Ej. Felipe Pérez">
-      </label>
-      <label>Usuario
-        <input name="username" data-label="Usuario" data-format="username" autocomplete="username" placeholder="Ej. felipe.perez">
-      </label>
-      <label>Correo (opcional)
-        <input name="email" type="email" data-label="Correo" autocomplete="email" placeholder="Ej. felipe@correo.com">
-      </label>
-      <label>Teléfono
-        <input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="9" placeholder="Ej. 8888-8888">
-      </label>
-      {% if current_user.role == 'admin' %}
-      <label>Tipo de usuario
-        <select name="role"><option value="leader">Líder</option><option value="mentor">Mentor</option></select>
-      </label>
-      {% endif %}
-      <label>Sector
-        <select name="sector"><option value="">Sin sector</option>{% for s in SECTORS %}<option value="{{s}}">{{s}}</option>{% endfor %}</select>
-      </label>
+      <label>Nombre<input name="name" required data-label="Nombre" autocomplete="name" placeholder="Ej. Felipe Pérez"></label>
+      <label>Usuario<input name="username" data-label="Usuario" data-format="username" autocomplete="username" placeholder="Ej. felipe.perez"></label>
+      <label>Correo (opcional)<input name="email" type="email" data-label="Correo" autocomplete="email" placeholder="Ej. felipe@correo.com"></label>
+      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="9" placeholder="Ej. 8888-8888"></label>
       {% if current_user.role == 'admin' %}
       <label>Mentor asignado
-        <select name="mentor_id"><option value="">Sin mentor</option>{% for m in mentors %}<option value="{{m.id}}">{{m.name}}{% if m.sector %} · {{m.sector}}{% endif %}</option>{% endfor %}</select>
+        <select name="mentor_id" id="mentorSelect">
+          <option value="">Sin mentor</option>
+          {% for m in mentors %}<option value="{{m.id}}" data-sector="{{m.sector or ''}}">{{m.name}}{% if m.sector %} · {{m.sector}}{% endif %}</option>{% endfor %}
+        </select>
+        <span class="hint">El líder heredará el sector del mentor.</span>
       </label>
+      <label>Sector automático<input id="sectorPreview" value="Seleccioná un mentor" readonly></label>
+      {% else %}
+      <label>Mentor asignado<input value="{{ current_user.name }}" readonly></label>
+      <label>Sector<input value="{{ current_user.sector or 'Sin sector' }}" readonly></label>
       {% endif %}
-      <label>Contraseña (opcional)
-        <input name="password" data-label="Contraseña" autocomplete="new-password" placeholder="Ej. H0sanna2026">
-      </label>
+      <label>Contraseña (opcional)<input name="password" data-label="Contraseña" autocomplete="new-password" placeholder="Ej. H0sanna2026"></label>
     </div>
   </div>
   <div class="option-row compact leader-sms-row">
-    <div>
-      <strong>Enviar credenciales por SMS</strong>
-      <p>Opcional. Usa Twilio si las variables de entorno están configuradas.</p>
-    </div>
+    <div><strong>Enviar credenciales por SMS</strong><p>Opcional. Usa Twilio si está configurado.</p></div>
     <label class="switch" aria-label="Enviar SMS automático"><input type="checkbox" name="send_sms"><span></span></label>
   </div>
   <button class="btn primary full"><span class="icon plus"></span>Crear líder</button>
 </form>
 
-
 <section class="panel shell leader-shell fade-up delay-2 admin-filters">
   <form method="get" class="filters-grid compact-filters">
     <label>Buscar<input name="q" value="{{ q or '' }}" placeholder="Nombre, usuario, teléfono..."></label>
     <label>Sector<select name="sector"><option value="">Todos</option>{% for s in SECTORS %}<option value="{{s}}" {% if sector_filter==s %}selected{% endif %}>{{s}}</option>{% endfor %}</select></label>
-    <label>Rol<select name="role"><option value="">Todos</option><option value="leader" {% if role_filter=='leader' %}selected{% endif %}>Líder</option><option value="mentor" {% if role_filter=='mentor' %}selected{% endif %}>Mentor</option></select></label>
-    <label>Ordenar<select name="sort"><option value="name" {% if sort=='name' %}selected{% endif %}>Nombre</option><option value="username" {% if sort=='username' %}selected{% endif %}>Usuario</option><option value="role" {% if sort=='role' %}selected{% endif %}>Rol</option><option value="sector" {% if sort=='sector' %}selected{% endif %}>Sector</option><option value="mentor" {% if sort=='mentor' %}selected{% endif %}>Mentor</option><option value="phone" {% if sort=='phone' %}selected{% endif %}>Teléfono</option></select></label>
+    {% if current_user.role == 'admin' %}<label>Mentor<select name="mentor_id"><option value="">Todos</option>{% for m in mentors %}<option value="{{m.id}}" {% if mentor_filter|string==m.id|string %}selected{% endif %}>{{m.name}}</option>{% endfor %}</select></label>{% endif %}
+    <label>Ordenar<select name="sort"><option value="name" {% if sort=='name' %}selected{% endif %}>Nombre</option><option value="username" {% if sort=='username' %}selected{% endif %}>Usuario</option><option value="sector" {% if sort=='sector' %}selected{% endif %}>Sector</option><option value="mentor" {% if sort=='mentor' %}selected{% endif %}>Mentor</option><option value="phone" {% if sort=='phone' %}selected{% endif %}>Teléfono</option></select></label>
     <label>Dirección<select name="dir"><option value="asc" {% if direction=='asc' %}selected{% endif %}>Ascendente</option><option value="desc" {% if direction=='desc' %}selected{% endif %}>Descendente</option></select></label>
     <button class="btn primary" type="submit"><span class="icon search"></span>Filtrar</button><a class="btn ghost" href="{{ url_for('admin_leaders') }}">Limpiar</a>
   </form>
@@ -86,47 +69,30 @@
 
 <div class="table-card shell leader-shell fade-up delay-3">
   <table class="leaders-table">
-    <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Sector</th><th>Mentor</th><th>Célula asignada</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
+    <tr><th>Nombre</th><th>Usuario</th><th>Sector</th><th>Mentor</th><th>Célula asignada</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
     {% for l in leaders %}
     <tr>
-      <td><b>{{l.name}}</b></td>
+      <td><b>{{l.name}}</b><div class="mobile-sub">{{ l.email or 'Correo no registrado' }}</div></td>
       <td><b>{{l.username}}</b></td>
-      <td><span class="mini-pill">{{ 'Mentor' if l.role == 'mentor' else 'Líder' }}</span></td>
-      <td>{{ l.sector or 'Sin sector' }}</td>
+      <td><span class="mini-pill">{{ l.sector or 'Sin sector' }}</span></td>
       <td>{% set mentor = get_mentor(l) %}{{ mentor.name if mentor else 'Sin mentor' }}</td>
-      <td class="assigned-cells">
-        {% if l.cells %}
-          {% for cell in l.cells %}
-            <span class="mini-pill">{{ cell.name }}</span>
-          {% endfor %}
-        {% else %}
-          <span class="muted-inline">Sin célula</span>
-        {% endif %}
-      </td>
-      <td>{{l.email or '—'}}</td>
+      <td class="assigned-cells">{% if l.cells %}{% for cell in l.cells %}<span class="mini-pill">{{ cell.name }}</span>{% endfor %}{% else %}<span class="muted-inline">Sin célula</span>{% endif %}</td>
       <td>{{l.phone or '—'}}</td>
       <td><span class="distance-badge"><span class="status-dot"></span>{{'Activo' if l.active else 'Inactivo'}}</span></td>
       <td>
-        {% if current_user.role == 'admin' or (current_user.role == 'mentor' and l.mentor_id == current_user.id) %}
         <div class="row-actions">
           <a class="btn small ghost" href="{{ url_for('admin_leader_edit', leader_id=l.id) }}"><span class="icon edit"></span>Editar</a>
-          {% if current_user.role == 'admin' and l.role == 'leader' %}
-          <form method="post" action="{{ url_for('admin_leader_credentials', leader_id=l.id) }}" data-confirm="Generar nuevas credenciales" data-confirm-message="Se generará una nueva contraseña para {{ l.name }}. La contraseña anterior dejará de funcionar.">
-            <button class="btn small ghost" type="submit"><span class="icon key"></span>Credenciales</button>
-          </form>
-          <form method="post" action="{{ url_for('admin_leader_delete', leader_id=l.id) }}" data-confirm="Eliminar líder" data-confirm-message="Se eliminará el líder {{ l.name }}. Las células asignadas quedarán sin líder.">
-            <button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button>
-          </form>
+          {% if current_user.role == 'admin' %}
+          <form method="post" action="{{ url_for('admin_leader_credentials', leader_id=l.id) }}" data-confirm="Generar nuevas credenciales" data-confirm-message="Se generará una nueva contraseña para {{ l.name }}."><button class="btn small ghost" type="submit"><span class="icon key"></span>Credenciales</button></form>
+          <form method="post" action="{{ url_for('admin_leader_delete', leader_id=l.id) }}" data-confirm="Eliminar líder" data-confirm-message="Se eliminará el líder {{ l.name }}. Sus células quedarán sin líder."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form>
           {% endif %}
         </div>
-        {% else %}
-        <span class="muted">Solo lectura</span>
-        {% endif %}
       </td>
     </tr>
-    {% else %}
-    <tr><td colspan="10"><div class="empty">No hay líderes registrados.</div></td></tr>
-    {% endfor %}
+    {% else %}<tr><td colspan="8"><div class="empty">No hay líderes registrados.</div></td></tr>{% endfor %}
   </table>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{const s=document.getElementById('mentorSelect');const p=document.getElementById('sectorPreview');if(s&&p){const up=()=>{const o=s.options[s.selectedIndex];p.value=(o&&o.dataset.sector)?o.dataset.sector:'Sin sector'};s.addEventListener('change',up);up();}});
+</script>
 {% endblock %}

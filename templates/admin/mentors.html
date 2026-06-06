@@ -1,21 +1,51 @@
 {% extends 'base.html' %}{% block content %}
 <section class="dash-head shell fade-up">
-  <div>
-    <p class="eyebrow">Admin</p>
-    <h1>Mentores</h1>
-    <p>Asigná líderes a mentores por sector con selección rápida. Los cambios quedan aplicados al líder y a sus células asignadas.</p>
-  </div>
-  <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a><a class="btn primary" href="{{ url_for('admin_leaders') }}"><span class="icon plus"></span>Crear mentor</a></div>
+  <div><p class="eyebrow">Admin</p><h1>Mentores</h1><p>Administrá mentores por sector y asigná líderes de forma rápida.</p></div>
+  <div class="actions"><a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a><a class="btn ghost" href="{{ url_for('admin_leaders') }}"><span class="icon user"></span>Líderes</a><a class="btn ghost" href="{{ url_for('admin_cells') }}"><span class="icon grid"></span>Células</a></div>
 </section>
 
-<section class="stats shell fade-up delay-1">
-  {% for m in mentors %}
-  <div class="stat mentor-stat"><strong>{{ mentor_counts.get(m.id, 0) }}</strong><span>{{ m.name }}{% if m.sector %} · {{m.sector}}{% endif %}</span></div>
-  {% else %}<div class="empty panel">Todavía no hay mentores creados. Crealos desde Líderes con tipo de usuario Mentor.</div>{% endfor %}
+{% if generated %}
+<div class="panel success-box shell leader-shell fade-up">
+  <div class="panel-title"><div><h2>Credenciales generadas</h2><p>Compartilas con el mentor por WhatsApp o copiá el mensaje.</p></div></div>
+  <p><b>Usuario:</b> {{generated.username}}</p><p><b>Contraseña:</b> {{generated.password}}</p>
+  <textarea readonly>{{generated.body}}</textarea>
+  <div class="card-actions credentials-actions">{% if generated.whatsapp_url %}<a class="btn primary" href="{{ generated.whatsapp_url }}" target="_blank" rel="noopener"><span class="icon chat"></span>Enviar por WhatsApp</a>{% endif %}<button class="btn ghost" type="button" data-copy-text="{{ generated.body|e }}"><span class="icon copy"></span>Copiar mensaje</button></div>
+</div>
+{% endif %}
+
+<section class="grid two shell mentor-layout fade-up delay-1">
+  <form method="post" class="form panel smart-form" novalidate>
+    <input type="hidden" name="action" value="create">
+    <div class="form-section"><div><h3>Nuevo mentor</h3><p>El sector del mentor será heredado por sus líderes.</p></div>
+      <label>Nombre<input name="name" required data-label="Nombre" placeholder="Ej. Steve Solís"></label>
+      <label>Usuario<input name="username" data-label="Usuario" data-format="username" placeholder="Ej. steve.solis"></label>
+      <label>Sector<select name="sector" required data-label="Sector"><option value="">Seleccionar</option>{% for s in SECTORS if s != 'Sin sector' %}<option value="{{s}}">{{s}}</option>{% endfor %}</select></label>
+      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" maxlength="9" placeholder="Ej. 8888-8888"></label>
+      <label>Correo (opcional)<input name="email" type="email" data-label="Correo" placeholder="Ej. mentor@correo.com"></label>
+      <label>Contraseña (opcional)<input name="password" data-label="Contraseña" placeholder="Ej. H0sanna2026"></label>
+    </div>
+    <button class="btn primary full"><span class="icon plus"></span>Crear mentor</button>
+  </form>
+
+  <div class="panel mentor-list-panel">
+    <div class="panel-title"><div><h2>Lista de mentores</h2><p>Editar, credenciales y eliminación controlada.</p></div></div>
+    <div class="mentor-card-list">
+      {% for m in mentors %}
+      <article class="mentor-mini-card">
+        <div><h3>{{m.name}}</h3><p>{{m.username}} · {{m.sector or 'Sin sector'}}</p><p class="muted-inline">{{ mentor_counts.get(m.id, 0) }} líder(es)</p></div>
+        <div class="row-actions">
+          <a class="btn small ghost" href="{{ url_for('admin_mentor_edit', mentor_id=m.id) }}"><span class="icon edit"></span>Editar</a>
+          <form method="post" action="{{ url_for('admin_mentor_credentials', mentor_id=m.id) }}" data-confirm="Generar credenciales" data-confirm-message="Se generará una nueva contraseña para {{m.name}}."><button class="btn small ghost" type="submit"><span class="icon key"></span>Credenciales</button></form>
+          <form method="post" action="{{ url_for('admin_mentor_delete', mentor_id=m.id) }}" data-confirm="Eliminar mentor" data-confirm-message="Se eliminará {{m.name}}. Sus líderes quedarán sin mentor ni sector."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form>
+        </div>
+      </article>
+      {% else %}<div class="empty">Todavía no hay mentores.</div>{% endfor %}
+    </div>
+  </div>
 </section>
 
 <section class="panel shell fade-up delay-2 admin-filters">
-  <div class="panel-title"><div><h2>Asignación rápida</h2><p>Filtrá por sector, marcá líderes y asigná mentor en un solo envío.</p></div></div>
+  <div class="panel-title"><div><h2>Asignar líderes</h2><p>Seleccioná líderes y enviálos a un mentor. El sector se toma del mentor. También podés dejarlos sin mentor.</p></div></div>
   <form method="get" class="filters-grid compact-filters">
     <label>Buscar<input name="q" value="{{ q or '' }}" placeholder="Líder, usuario, teléfono..."></label>
     <label>Sector<select name="sector"><option value="">Todos</option>{% for s in SECTORS %}<option value="{{s}}" {% if sector_filter==s %}selected{% endif %}>{{s}}</option>{% endfor %}</select></label>
@@ -25,36 +55,25 @@
   </form>
 </section>
 
-<form method="post" class="shell fade-up delay-3">
-  <section class="panel assign-panel">
-    <div class="grid two">
-      <label>Mentor destino<select name="mentor_id" required><option value="">Seleccionar mentor</option>{% for m in mentors %}<option value="{{m.id}}">{{m.name}}{% if m.sector %} · {{m.sector}}{% endif %}</option>{% endfor %}</select></label>
-      <label>Sector destino<select name="sector"><option value="">Usar sector del mentor / mantener</option>{% for s in SECTORS if s != 'Sin sector' %}<option value="{{s}}">{{s}}</option>{% endfor %}</select></label>
-    </div>
-    <div class="assign-actions"><button class="btn primary" type="submit"><span class="icon check"></span>Asignar seleccionados</button><button type="button" class="btn ghost" data-check-all="leader_ids">Seleccionar visibles</button></div>
-  </section>
-
-  <section class="sector-board">
+<form method="post" class="shell fade-up delay-3 assign-panel">
+  <input type="hidden" name="action" value="assign">
+  <div class="assign-toolbar panel">
+    <label>Mentor destino<select name="mentor_id"><option value="">Quitar mentor y sector</option>{% for m in mentors %}<option value="{{m.id}}">{{m.name}}{% if m.sector %} · {{m.sector}}{% endif %}</option>{% endfor %}</select></label>
+    <button class="btn primary" type="submit"><span class="icon chevron"></span>Aplicar asignación</button>
+  </div>
+  <section class="sector-accordion">
     {% for sector, sector_leaders in grouped_leaders.items() %}
     <details class="sector-group" open>
-      <summary><div><strong>{{ sector }}</strong><span>{{ sector_leaders|length }} líder{{ '' if sector_leaders|length == 1 else 'es' }}</span></div><span class="mini-pill">Asignar</span></summary>
-      <div class="sector-table-wrap">
-        <table class="sortable-table">
-          <thead><tr><th></th><th>Líder</th><th>Usuario</th><th>Mentor actual</th><th>Célula</th><th>Teléfono</th><th>Estado</th></tr></thead>
-          <tbody>
-          {% for l in sector_leaders %}
-          <tr>
-            <td><label class="check-only"><input type="checkbox" name="leader_ids" value="{{l.id}}"><span></span></label></td>
-            <td><b>{{l.name}}</b></td>
-            <td>{{l.username}}</td>
-            <td>{% set mentor = get_mentor(l) %}{{ mentor.name if mentor else 'Sin mentor' }}</td>
-            <td>{% if l.cells %}{% for cell in l.cells %}<span class="mini-pill">{{cell.name}}</span>{% endfor %}{% else %}<span class="muted-inline">Sin célula</span>{% endif %}</td>
-            <td>{{l.phone or '—'}}</td>
-            <td><span class="distance-badge"><span class="status-dot"></span>{{'Activo' if l.active else 'Inactivo'}}</span></td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
+      <summary><span>{{sector}}</span><small>{{sector_leaders|length}} líder(es)</small></summary>
+      <div class="leader-chip-grid">
+        {% for l in sector_leaders %}
+        {% set mentor = get_mentor(l) %}
+        <label class="leader-select-card">
+          <input type="checkbox" name="leader_ids" value="{{l.id}}">
+          <span class="select-indicator"></span>
+          <div><strong>{{l.name}}</strong><p>{{ l.cells[0].name if l.cells else 'Sin célula' }} · {{ mentor.name if mentor else 'Sin mentor' }}</p></div>
+        </label>
+        {% endfor %}
       </div>
     </details>
     {% else %}<div class="empty panel">No hay líderes con esos filtros.</div>{% endfor %}

@@ -669,17 +669,28 @@ def admin_cell_edit(cell_id):
     return render_template('admin/cell_form.html', cell=c, leaders=leaders)
 
 def fill_cell(c, form):
-    c.name=form.get('name','').strip(); c.leader_id=int(form.get('leader_id')) if form.get('leader_id') else None
-    c.barrio=safe_text(form.get('barrio',''), '') or 'Otro'; c.barrio_other=safe_text(form.get('barrio_other',''), '') or None
-    c.address=form.get('address','').strip(); c.day=form.get('day','').strip(); c.time=form.get('time','').strip()
-    c.phone=form.get('phone','').strip(); c.description=form.get('description','').strip(); c.status=form.get('status','active')
-    c.cell_type=form.get('cell_type','adultos') or 'adultos'; c.has_children_teacher = form.get('has_children_teacher') == 'on'
-    c.google_maps_url=form.get('google_maps_url','').strip(); c.waze_url=form.get('waze_url','').strip()
-    lat = form.get('latitude'); lng=form.get('longitude')
+    c.name = form.get('name','').strip()
+    c.leader_id = int(form.get('leader_id')) if form.get('leader_id') else None
+    c.barrio = safe_text(form.get('barrio',''), '') or 'Otro'
+    c.barrio_other = safe_text(form.get('barrio_other',''), '') or None
+    c.address = form.get('address','').strip()
+    c.day = form.get('day','').strip()
+    c.time = form.get('time','').strip()
+    c.status = form.get('status','active')
+    c.cell_type = form.get('cell_type','adultos') or 'adultos'
+    c.has_children_teacher = form.get('has_children_teacher') == 'on'
+    # Teléfono y descripción permanecen en base por compatibilidad, pero ya no se usan en la UI.
+    c.phone = None
+    c.description = None
+    c.google_maps_url = form.get('google_maps_url','').strip()
+    c.waze_url = form.get('waze_url','').strip()
+    lat = form.get('latitude'); lng = form.get('longitude')
     if (not lat or not lng) and c.google_maps_url:
-        lat2,lng2=extract_coords(c.google_maps_url); lat = lat or lat2; lng = lng or lng2
-    c.latitude=float(lat) if lat not in [None,''] else None
-    c.longitude=float(lng) if lng not in [None,''] else None
+        lat2, lng2 = extract_coords(c.google_maps_url)
+        lat = lat or lat2
+        lng = lng or lng2
+    c.latitude = float(lat) if lat not in [None,''] else None
+    c.longitude = float(lng) if lng not in [None,''] else None
     if c.latitude is not None and c.longitude is not None:
         c.google_maps_url = c.google_maps_url or maps_url(c.latitude, c.longitude)
         c.waze_url = c.waze_url or waze_url(c.latitude, c.longitude)
@@ -695,6 +706,7 @@ def admin_cell_delete(cell_id):
     flash('Célula eliminada correctamente.', 'success')
     return redirect(url_for('admin_cells'))
 
+
 @app.route('/admin/leaders', methods=['GET','POST'])
 @login_required
 @manager_required
@@ -702,19 +714,22 @@ def admin_leaders():
     generated = None
     mentors = User.query.filter_by(role='mentor', active=True).order_by(User.name).all() if current_user.role == 'admin' else []
     if request.method == 'POST':
-        name=request.form.get('name','').strip(); username=(request.form.get('username') or '').lower().strip(); email=(request.form.get('email') or '').lower().strip() or None; phone_digits=clean_phone(request.form.get('phone','')); phone=format_cr_phone(phone_digits) if phone_digits else None
-        password=request.form.get('password') or random_password()
-        role = request.form.get('role','leader') if current_user.role == 'admin' else 'leader'
-        if role not in ['leader','mentor']:
-            role = 'leader'
-        sector = safe_text(request.form.get('sector'), '') or None
+        name = request.form.get('name','').strip()
+        username = (request.form.get('username') or '').lower().strip()
+        email = (request.form.get('email') or '').lower().strip() or None
+        phone_digits = clean_phone(request.form.get('phone',''))
+        phone = format_cr_phone(phone_digits) if phone_digits else None
+        password = request.form.get('password') or random_password()
         mentor_id = None
-        if role == 'leader':
-            if current_user.role == 'mentor':
-                mentor_id = current_user.id
-                sector = current_user.sector or sector
-            else:
-                mentor_id = int(request.form.get('mentor_id')) if request.form.get('mentor_id') else None
+        sector = None
+        if current_user.role == 'mentor':
+            mentor_id = current_user.id
+            sector = current_user.sector
+        elif request.form.get('mentor_id'):
+            mentor = User.query.filter_by(id=int(request.form.get('mentor_id')), role='mentor').first()
+            if mentor:
+                mentor_id = mentor.id
+                sector = mentor.sector
         if not name:
             flash('Nombre es obligatorio.', 'danger'); return redirect(url_for('admin_leaders'))
         if phone_digits and len(phone_digits) != 8:
@@ -724,96 +739,95 @@ def admin_leaders():
             flash('Ya existe un usuario con ese nombre de usuario.', 'danger'); return redirect(url_for('admin_leaders'))
         if email and User.query.filter_by(email=email).first():
             flash('Ya existe un usuario con ese correo.', 'danger'); return redirect(url_for('admin_leaders'))
-        u=User(name=name,username=username,email=email,phone=phone,role=role,active=True,sector=sector,mentor_id=mentor_id); u.set_password(password); db.session.add(u); db.session.commit()
+        u = User(name=name, username=username, email=email, phone=phone, role='leader', active=True, sector=sector, mentor_id=mentor_id)
+        u.set_password(password)
+        db.session.add(u)
+        db.session.commit()
         body = build_credentials_message(u, password)
-        credentials_whatsapp_url = wa_message_link(phone, body) if phone else ''
-        sent=False; sms_msg=''
+        generated = {'name':name,'username':username,'email':email,'password':password,'phone':phone,'body':body,'sent':False,'whatsapp_url':wa_message_link(phone, body) if phone else ''}
         if request.form.get('send_sms') == 'on' and phone:
-            sent, sms_msg = send_sms(phone, body); flash(sms_msg, 'success' if sent else 'warning')
-        generated={'name':name,'username':username,'email':email,'password':password,'phone':phone,'body':body,'sent':sent,'whatsapp_url':credentials_whatsapp_url}
-        flash(('Mentor' if role == 'mentor' else 'Líder') + ' creado correctamente.', 'success')
+            sent, sms_msg = send_sms(phone, body)
+            generated['sent'] = sent
+            flash(sms_msg, 'success' if sent else 'warning')
+        flash('Líder creado correctamente.', 'success')
+
     q = (request.args.get('q') or '').strip().lower()
     sector_filter = (request.args.get('sector') or '').strip()
-    role_filter = (request.args.get('role') or '').strip()
+    mentor_filter = request.args.get('mentor_id') or ''
     sort = (request.args.get('sort') or 'name').strip()
     direction = (request.args.get('dir') or 'asc').strip()
+    leaders = User.query.filter_by(role='leader').all()
     if current_user.role == 'mentor':
-        leaders = User.query.filter_by(role='leader', mentor_id=current_user.id).all()
-    else:
-        leaders = User.query.filter(User.role.in_(['leader','mentor'])).all()
+        leaders = [u for u in leaders if u.mentor_id == current_user.id]
 
     def matches(u):
         if q:
-            haystack = ' '.join([safe_text(u.name,''), safe_text(u.username,''), safe_text(u.phone,''), safe_text(u.email,''), safe_text(u.sector,'')]).lower()
+            haystack = ' '.join([safe_text(u.name,''), safe_text(u.username,''), safe_text(u.phone,''), safe_text(u.email,''), safe_text(u.sector,''), safe_text(get_mentor(u).name if get_mentor(u) else '', '')]).lower()
             if q not in haystack:
                 return False
         if sector_filter and sector_filter != 'Todos' and user_sector_label(u) != sector_filter:
             return False
-        if role_filter and role_filter != 'Todos' and u.role != role_filter:
+        if mentor_filter and str(u.mentor_id or '') != mentor_filter:
             return False
         return True
     leaders = [u for u in leaders if matches(u)]
     def sort_key(u):
         keys = {
-            'name': safe_text(u.name,'').lower(), 'username': safe_text(u.username,'').lower(), 'role': safe_text(u.role,'').lower(),
-            'sector': user_sector_label(u), 'mentor': safe_text(get_mentor(u).name if get_mentor(u) else '', '').lower(),
-            'phone': safe_text(u.phone,'').lower(), 'status': '1' if u.active else '0'
+            'name': safe_text(u.name,'').lower(),
+            'username': safe_text(u.username,'').lower(),
+            'sector': user_sector_label(u),
+            'mentor': safe_text(get_mentor(u).name if get_mentor(u) else '', '').lower(),
+            'phone': safe_text(u.phone,'').lower(),
+            'status': '1' if u.active else '0'
         }
         return keys.get(sort, keys['name'])
     leaders = sorted(leaders, key=sort_key, reverse=(direction == 'desc'))
-    return render_template('admin/leaders.html', leaders=leaders, mentors=mentors, generated=generated, q=q, sector_filter=sector_filter, role_filter=role_filter, sort=sort, direction=direction)
-
-
-
+    return render_template('admin/leaders.html', leaders=leaders, mentors=mentors, generated=generated, q=q, sector_filter=sector_filter, mentor_filter=mentor_filter, sort=sort, direction=direction)
 
 @app.route('/admin/leaders/<int:leader_id>/edit', methods=['GET','POST'])
 @login_required
 @manager_required
 def admin_leader_edit(leader_id):
     u = User.query.get_or_404(leader_id)
-    if not can_manage_leader(u):
+    if not can_manage_leader(u) or u.role != 'leader':
         abort(403)
-    if u.role not in ['leader', 'mentor']:
-        abort(403)
+    mentors = User.query.filter_by(role='mentor', active=True).order_by(User.name).all() if current_user.role == 'admin' else []
     if request.method == 'POST':
         name = request.form.get('name','').strip()
         username = slug_username(request.form.get('username',''))
         email = (request.form.get('email') or '').lower().strip() or None
         phone_digits = clean_phone(request.form.get('phone',''))
         phone = format_cr_phone(phone_digits) if phone_digits else None
-        sector = safe_text(request.form.get('sector'), '') or None
-        mentor_id = int(request.form.get('mentor_id')) if request.form.get('mentor_id') and current_user.role == 'admin' and u.role == 'leader' else None
-        role = (request.form.get('role') or u.role) if current_user.role == 'admin' else u.role
+        mentor_id = u.mentor_id
+        sector = u.sector
+        if current_user.role == 'admin':
+            if request.form.get('mentor_id'):
+                mentor = User.query.filter_by(id=int(request.form.get('mentor_id')), role='mentor').first()
+                mentor_id = mentor.id if mentor else None
+                sector = mentor.sector if mentor else None
+            else:
+                mentor_id = None
+                sector = None
         active = request.form.get('active') == 'on'
         password = request.form.get('password') or ''
-        if role not in ['leader','mentor']:
-            role = 'leader'
         if not name:
-            flash('Nombre es obligatorio.', 'danger')
-            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+            flash('Nombre es obligatorio.', 'danger'); return redirect(url_for('admin_leader_edit', leader_id=u.id))
         if not username:
-            flash('Usuario es obligatorio.', 'danger')
-            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+            flash('Usuario es obligatorio.', 'danger'); return redirect(url_for('admin_leader_edit', leader_id=u.id))
         if User.query.filter(User.username == username, User.id != u.id).first():
-            flash('Ese usuario ya está en uso.', 'danger')
-            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+            flash('Ese usuario ya está en uso.', 'danger'); return redirect(url_for('admin_leader_edit', leader_id=u.id))
         if email and User.query.filter(User.email == email, User.id != u.id).first():
-            flash('Ese correo ya está en uso.', 'danger')
-            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+            flash('Ese correo ya está en uso.', 'danger'); return redirect(url_for('admin_leader_edit', leader_id=u.id))
         if phone_digits and len(phone_digits) != 8:
-            flash('El teléfono debe tener 8 dígitos. Ejemplo: 8888-8888.', 'danger')
-            return redirect(url_for('admin_leader_edit', leader_id=u.id))
-        u.name = name; u.username = username; u.email = email; u.phone = phone; u.role = role; u.active = active; u.sector = sector; u.mentor_id = mentor_id if role == 'leader' else None
+            flash('El teléfono debe tener 8 dígitos. Ejemplo: 8888-8888.', 'danger'); return redirect(url_for('admin_leader_edit', leader_id=u.id))
+        u.name = name; u.username = username; u.email = email; u.phone = phone; u.active = active; u.mentor_id = mentor_id; u.sector = sector
         if password:
             if len(password) < 8:
-                flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger')
-                return redirect(url_for('admin_leader_edit', leader_id=u.id))
-            u.set_password(password)
-            u.current_session_token = None
+                flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger'); return redirect(url_for('admin_leader_edit', leader_id=u.id))
+            u.set_password(password); u.current_session_token = None
         db.session.commit()
-        flash('Usuario actualizado correctamente.', 'success')
+        flash('Líder actualizado correctamente.', 'success')
         return redirect(url_for('admin_leaders'))
-    mentors = User.query.filter_by(role='mentor', active=True).order_by(User.name).all() if current_user.role == 'admin' else []
     return render_template('admin/leader_edit.html', leader=u, mentors=mentors)
 
 @app.route('/admin/leaders/<int:leader_id>/credentials', methods=['POST'])
@@ -827,19 +841,11 @@ def admin_leader_credentials(leader_id):
     u.set_password(password)
     db.session.commit()
     body = build_credentials_message(u, password)
-    generated = {
-        'name': u.name,
-        'username': u.username,
-        'email': u.email,
-        'password': password,
-        'phone': u.phone,
-        'body': body,
-        'sent': False,
-        'whatsapp_url': wa_message_link(u.phone, body) if u.phone else ''
-    }
+    generated = {'name':u.name,'username':u.username,'email':u.email,'password':password,'phone':u.phone,'body':body,'sent':False,'whatsapp_url':wa_message_link(u.phone, body) if u.phone else ''}
     flash('Credenciales generadas nuevamente. La contraseña anterior fue reemplazada.', 'success')
     leaders = User.query.filter_by(role='leader').order_by(User.created_at.desc()).all()
-    return render_template('admin/leaders.html', leaders=leaders, generated=generated)
+    mentors = User.query.filter_by(role='mentor', active=True).order_by(User.name).all()
+    return render_template('admin/leaders.html', leaders=leaders, mentors=mentors, generated=generated, q='', sector_filter='', mentor_filter='', sort='name', direction='asc')
 
 @app.route('/admin/leaders/<int:leader_id>/delete', methods=['POST'])
 @login_required
@@ -854,68 +860,148 @@ def admin_leader_delete(leader_id):
     flash('Líder eliminado correctamente. Sus células quedaron sin líder asignado.', 'success')
     return redirect(url_for('admin_leaders'))
 
-
 @app.route('/admin/mentors', methods=['GET','POST'])
 @login_required
 @admin_required
 def admin_mentors():
+    generated = None
     if request.method == 'POST':
-        mentor_id = request.form.get('mentor_id')
-        sector = normalize_sector(request.form.get('sector'))
-        leader_ids = request.form.getlist('leader_ids')
-        if not mentor_id or not leader_ids:
-            flash('Seleccioná un mentor y al menos un líder.', 'danger')
+        action = request.form.get('action') or 'assign'
+        if action == 'create':
+            name = request.form.get('name','').strip()
+            username = (request.form.get('username') or '').lower().strip()
+            email = (request.form.get('email') or '').lower().strip() or None
+            phone_digits = clean_phone(request.form.get('phone',''))
+            phone = format_cr_phone(phone_digits) if phone_digits else None
+            sector = normalize_sector(request.form.get('sector'))
+            password = request.form.get('password') or random_password()
+            if not name:
+                flash('Nombre del mentor es obligatorio.', 'danger'); return redirect(url_for('admin_mentors'))
+            if phone_digits and len(phone_digits) != 8:
+                flash('El teléfono debe tener 8 dígitos. Ejemplo: 8888-8888.', 'danger'); return redirect(url_for('admin_mentors'))
+            username = slug_username(username) if username else unique_username(name)
+            if User.query.filter_by(username=username).first():
+                flash('Ya existe un usuario con ese nombre de usuario.', 'danger'); return redirect(url_for('admin_mentors'))
+            if email and User.query.filter_by(email=email).first():
+                flash('Ya existe un usuario con ese correo.', 'danger'); return redirect(url_for('admin_mentors'))
+            mentor = User(name=name, username=username, email=email, phone=phone, role='mentor', active=True, sector=sector)
+            mentor.set_password(password)
+            db.session.add(mentor); db.session.commit()
+            body = build_credentials_message(mentor, password)
+            generated = {'name':name,'username':username,'email':email,'password':password,'phone':phone,'body':body,'sent':False,'whatsapp_url':wa_message_link(phone, body) if phone else ''}
+            flash('Mentor creado correctamente.', 'success')
+        else:
+            mentor_id = request.form.get('mentor_id')
+            leader_ids = request.form.getlist('leader_ids')
+            if not leader_ids:
+                flash('Seleccioná al menos un líder.', 'danger'); return redirect(url_for('admin_mentors'))
+            leaders = User.query.filter(User.id.in_([int(x) for x in leader_ids]), User.role == 'leader').all()
+            if mentor_id:
+                mentor = User.query.filter_by(id=int(mentor_id), role='mentor').first_or_404()
+                for leader in leaders:
+                    leader.mentor_id = mentor.id
+                    leader.sector = mentor.sector
+                flash(f'{len(leaders)} líder(es) asignados a {mentor.name}.', 'success')
+            else:
+                for leader in leaders:
+                    leader.mentor_id = None
+                    leader.sector = None
+                flash(f'{len(leaders)} líder(es) quedaron sin mentor y sin sector.', 'success')
+            db.session.commit()
             return redirect(url_for('admin_mentors'))
-        mentor = User.query.filter_by(id=int(mentor_id), role='mentor').first_or_404()
-        mentor.sector = sector or mentor.sector
-        leaders = User.query.filter(User.id.in_([int(x) for x in leader_ids]), User.role == 'leader').all()
-        for leader in leaders:
-            leader.mentor_id = mentor.id
-            leader.sector = sector or mentor.sector or leader.sector
-        db.session.commit()
-        flash(f'{len(leaders)} líder(es) asignados a {mentor.name}.', 'success')
-        return redirect(url_for('admin_mentors', sector=sector or ''))
 
     q = (request.args.get('q') or '').strip().lower()
     sector_filter = (request.args.get('sector') or '').strip()
     mentor_filter = request.args.get('mentor_id') or ''
     sort = (request.args.get('sort') or 'sector').strip()
     direction = (request.args.get('dir') or 'asc').strip()
-
     mentors = User.query.filter_by(role='mentor').order_by(User.name.asc()).all()
     leaders = User.query.filter_by(role='leader').all()
-
     def matches(u):
         if q:
             haystack = ' '.join([safe_text(u.name,''), safe_text(u.username,''), safe_text(u.phone,''), safe_text(u.sector,''), safe_text(get_mentor(u).name if get_mentor(u) else '', '')]).lower()
-            if q not in haystack:
-                return False
-        if sector_filter and sector_filter != 'Todos' and user_sector_label(u) != sector_filter:
-            return False
-        if mentor_filter and str(u.mentor_id or '') != mentor_filter:
-            return False
+            if q not in haystack: return False
+        if sector_filter and sector_filter != 'Todos' and user_sector_label(u) != sector_filter: return False
+        if mentor_filter and str(u.mentor_id or '') != mentor_filter: return False
         return True
-
     leaders = [u for u in leaders if matches(u)]
     def sort_key(u):
-        keys = {
-            'name': safe_text(u.name,'').lower(),
-            'username': safe_text(u.username,'').lower(),
-            'sector': user_sector_label(u),
-            'mentor': safe_text(get_mentor(u).name if get_mentor(u) else '', '').lower(),
-            'cell': safe_text(u.cells[0].name if u.cells else '', '').lower(),
-        }
+        keys = {'name':safe_text(u.name,'').lower(),'username':safe_text(u.username,'').lower(),'sector':user_sector_label(u),'mentor':safe_text(get_mentor(u).name if get_mentor(u) else '', '').lower(),'cell':safe_text(u.cells[0].name if u.cells else '', '').lower()}
         return keys.get(sort, keys['sector'])
     leaders = sorted(leaders, key=sort_key, reverse=(direction == 'desc'))
-
     grouped = {}
-    for sector in SECTORS:
-        grouped[sector] = []
     for leader in leaders:
         grouped.setdefault(user_sector_label(leader), []).append(leader)
-    grouped = {k:v for k,v in grouped.items() if v}
     mentor_counts = {m.id: User.query.filter_by(role='leader', mentor_id=m.id).count() for m in mentors}
-    return render_template('admin/mentors.html', mentors=mentors, leaders=leaders, grouped_leaders=grouped, mentor_counts=mentor_counts, q=q, sector_filter=sector_filter, mentor_filter=mentor_filter, sort=sort, direction=direction)
+    return render_template('admin/mentors.html', mentors=mentors, leaders=leaders, grouped_leaders=grouped, mentor_counts=mentor_counts, generated=generated, q=q, sector_filter=sector_filter, mentor_filter=mentor_filter, sort=sort, direction=direction)
+
+@app.route('/admin/mentors/<int:mentor_id>/edit', methods=['GET','POST'])
+@login_required
+@admin_required
+def admin_mentor_edit(mentor_id):
+    mentor = User.query.get_or_404(mentor_id)
+    if mentor.role != 'mentor': abort(403)
+    if request.method == 'POST':
+        name = request.form.get('name','').strip()
+        username = slug_username(request.form.get('username',''))
+        email = (request.form.get('email') or '').lower().strip() or None
+        phone_digits = clean_phone(request.form.get('phone',''))
+        phone = format_cr_phone(phone_digits) if phone_digits else None
+        sector = normalize_sector(request.form.get('sector'))
+        active = request.form.get('active') == 'on'
+        password = request.form.get('password') or ''
+        if not name or not username:
+            flash('Nombre y usuario son obligatorios.', 'danger'); return redirect(url_for('admin_mentor_edit', mentor_id=mentor.id))
+        if User.query.filter(User.username == username, User.id != mentor.id).first():
+            flash('Ese usuario ya está en uso.', 'danger'); return redirect(url_for('admin_mentor_edit', mentor_id=mentor.id))
+        if email and User.query.filter(User.email == email, User.id != mentor.id).first():
+            flash('Ese correo ya está en uso.', 'danger'); return redirect(url_for('admin_mentor_edit', mentor_id=mentor.id))
+        if phone_digits and len(phone_digits) != 8:
+            flash('El teléfono debe tener 8 dígitos. Ejemplo: 8888-8888.', 'danger'); return redirect(url_for('admin_mentor_edit', mentor_id=mentor.id))
+        old_sector = mentor.sector
+        mentor.name=name; mentor.username=username; mentor.email=email; mentor.phone=phone; mentor.sector=sector; mentor.active=active
+        if password:
+            if len(password) < 8:
+                flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger'); return redirect(url_for('admin_mentor_edit', mentor_id=mentor.id))
+            mentor.set_password(password); mentor.current_session_token = None
+        if old_sector != sector:
+            for leader in User.query.filter_by(role='leader', mentor_id=mentor.id).all():
+                leader.sector = sector
+        db.session.commit()
+        flash('Mentor actualizado correctamente.', 'success')
+        return redirect(url_for('admin_mentors'))
+    return render_template('admin/mentor_edit.html', mentor=mentor)
+
+@app.route('/admin/mentors/<int:mentor_id>/credentials', methods=['POST'])
+@login_required
+@admin_required
+def admin_mentor_credentials(mentor_id):
+    mentor = User.query.get_or_404(mentor_id)
+    if mentor.role != 'mentor': abort(403)
+    password = random_password()
+    mentor.set_password(password)
+    db.session.commit()
+    body = build_credentials_message(mentor, password)
+    generated = {'name':mentor.name,'username':mentor.username,'email':mentor.email,'password':password,'phone':mentor.phone,'body':body,'sent':False,'whatsapp_url':wa_message_link(mentor.phone, body) if mentor.phone else ''}
+    flash('Credenciales del mentor generadas nuevamente.', 'success')
+    mentors = User.query.filter_by(role='mentor').order_by(User.name.asc()).all()
+    leaders = User.query.filter_by(role='leader').all()
+    mentor_counts = {m.id: User.query.filter_by(role='leader', mentor_id=m.id).count() for m in mentors}
+    return render_template('admin/mentors.html', mentors=mentors, leaders=leaders, grouped_leaders={}, mentor_counts=mentor_counts, generated=generated, q='', sector_filter='', mentor_filter='', sort='sector', direction='asc')
+
+@app.route('/admin/mentors/<int:mentor_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_mentor_delete(mentor_id):
+    mentor = User.query.get_or_404(mentor_id)
+    if mentor.role != 'mentor': abort(403)
+    for leader in User.query.filter_by(role='leader', mentor_id=mentor.id).all():
+        leader.mentor_id = None
+        leader.sector = None
+    db.session.delete(mentor)
+    db.session.commit()
+    flash('Mentor eliminado. Sus líderes quedaron sin mentor y sin sector.', 'success')
+    return redirect(url_for('admin_mentors'))
 
 @app.route('/admin/events', methods=['GET','POST'])
 @login_required
@@ -998,7 +1084,7 @@ def leader_dashboard():
 @leader_required
 def leader_cell_update():
     c = Cell.query.filter_by(leader_id=current_user.id).first_or_404()
-    allowed = ['address','day','time','phone','description','google_maps_url','waze_url','latitude','longitude','cell_type']
+    allowed = ['address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type']
     for k in allowed:
         if k in request.form:
             val = request.form.get(k)

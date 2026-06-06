@@ -44,7 +44,7 @@
             <td>
               <div class="row-actions">
                 {% if current_user.role == 'admin' or (current_user.role == 'mentor' and c.leader and c.leader.mentor_id == current_user.id) %}
-                  {% if current_user.role == 'admin' %}<a class="btn small ghost" href="{{ url_for('admin_cell_edit', cell_id=c.id) }}"><span class="icon edit"></span>Editar</a>{% endif %}
+                  <a class="btn small ghost" href="{{ url_for('admin_cell_edit', cell_id=c.id) }}"><span class="icon edit"></span>Editar</a>
                   {% if current_user.role == 'admin' %}<form method="post" action="{{ url_for('admin_cell_delete', cell_id=c.id) }}" data-confirm="Eliminar célula" data-confirm-message="Esta acción eliminará la célula {{ c.name }}. No se puede deshacer."><button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button></form>{% endif %}
                 {% else %}<span class="muted">Solo lectura</span>{% endif %}
               </div>
