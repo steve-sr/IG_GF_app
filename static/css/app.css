@@ -120,3 +120,31 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
 .prayer-card-clean{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:28px;padding:34px 36px}.prayer-actions{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap}.zoom-btn{white-space:nowrap}.zoom-mark{width:26px;height:26px;border-radius:9px;background:white;color:var(--blue);display:inline-grid;place-items:center;font-weight:1000;font-size:16px;line-height:1;text-transform:uppercase;box-shadow:0 8px 22px rgba(0,0,0,.12)}.zoom-pill{display:inline-flex;align-items:center;min-height:46px;white-space:nowrap}.map-embed-card{border-radius:34px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:white}.map-embed-card iframe{display:block;width:100%;height:420px;border:0;filter:saturate(.95) contrast(.96)}.btn .icon,.nav .icon,.dash-head .icon{width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;display:inline-block!important;overflow:visible!important}.dash-head .btn{overflow:visible}.gratitude-hero{margin-top:24px}.gratitude-cover{display:grid;grid-template-columns:minmax(0,1fr) 280px;align-items:center;gap:28px;min-height:420px;padding:48px;border-radius:38px;color:white;background:linear-gradient(135deg,rgba(8,47,143,.97),rgba(6,26,74,.97)),radial-gradient(620px 320px at 85% 20%,rgba(90,161,255,.36),transparent 70%);box-shadow:var(--shadow-blue);overflow:hidden}.gratitude-cover .eyebrow{color:#bcd7ff}.gratitude-cover h1{font-size:clamp(42px,5vw,72px);line-height:.94;letter-spacing:-.07em;margin:10px 0 18px;max-width:780px}.gratitude-cover p{font-size:19px;line-height:1.55;color:rgba(255,255,255,.78);max-width:700px;margin:0}.gratitude-cover img{width:min(260px,100%);height:auto;object-fit:contain;filter:drop-shadow(0 22px 56px rgba(0,0,0,.26));justify-self:center}.gratitude-card{display:grid;gap:16px;padding:26px}.gratitude-card span{display:inline-block;color:var(--blue);font-weight:950;text-transform:uppercase;letter-spacing:.14em;font-size:12px}.gratitude-card h3{font-size:28px;letter-spacing:-.055em;margin:0}.gratitude-card .btn[disabled],.gratitude-card input[disabled]{opacity:.72;cursor:not-allowed}
 @media(max-width:900px){.prayer-card-clean{grid-template-columns:1fr}.prayer-actions{justify-content:flex-start}.zoom-pill{white-space:normal}.map-embed-card iframe{height:360px}.gratitude-cover{grid-template-columns:1fr;text-align:left}.gratitude-cover img{max-width:190px;justify-self:start}.nav-actions a[href*='gratitude']{display:inline-flex}}
 @media(max-width:560px){.prayer-card-clean{padding:24px;border-radius:26px}.prayer-actions{display:grid;grid-template-columns:1fr;align-items:stretch}.zoom-btn,.zoom-pill{width:100%;justify-content:center;text-align:center}.map-embed-card{border-radius:26px}.map-embed-card iframe{height:320px}.gratitude-cover{padding:30px 24px;border-radius:28px;min-height:360px}.gratitude-cover h1{font-size:40px}.gratitude-cover p{font-size:16px}}
+
+.sinpe-card{
+  display:inline-flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:24px;
+  padding:18px 22px;
+  border-radius:24px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 22px 60px rgba(0,0,0,.16);
+  backdrop-filter:blur(18px);
+}
+.sinpe-card span{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  font-weight:900;
+  color:rgba(255,255,255,.72);
+}
+.sinpe-card strong{
+  color:#fff;
+  font-size:34px;
+  line-height:1;
+  letter-spacing:-.04em;
+}
+.sinpe-card small{color:rgba(255,255,255,.72);font-weight:700}
+@media (max-width:720px){.sinpe-card{width:100%}.sinpe-card strong{font-size:28px}}

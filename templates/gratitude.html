@@ -6,7 +6,12 @@
     <div>
       <p class="eyebrow">Gratitud</p>
       <h1>Honrá a Dios con tu generosidad.</h1>
-      <p>Este espacio estará preparado para diezmos, ofrendas y primicias. Pronto agregaremos la foto de la construcción del nuevo templo y el flujo de pago.</p>
+      <p>Este espacio está preparado para diezmos, ofrendas y primicias. Pronto agregaremos la foto de la construcción del nuevo templo y el flujo de pago.</p>
+      <div class="sinpe-card">
+        <span>SINPE Móvil</span>
+        <strong>8830-0202</strong>
+        <small>Número oficial para gratitud</small>
+      </div>
     </div>
     <img src="{{ url_for('static', filename='img/hosanna-oficial.png') }}" onerror="this.src='{{ url_for('static', filename='img/hosanna-logo.png') }}'" alt="Iglesia Hosanna">
   </div>
@@ -27,7 +32,7 @@
       <label>Monto
         <input type="text" placeholder="Ej. ₡25.000" disabled>
       </label>
-      <button class="btn primary" disabled>Próximamente</button>
+      <a class="btn primary" href="tel:88300202">Usar SINPE</a>
     </article>
     <article class="pro-card gratitude-card">
       <span>Ofrenda</span>
@@ -35,7 +40,7 @@
       <label>Monto
         <input type="text" placeholder="Ej. ₡10.000" disabled>
       </label>
-      <button class="btn primary" disabled>Próximamente</button>
+      <a class="btn primary" href="tel:88300202">Usar SINPE</a>
     </article>
     <article class="pro-card gratitude-card">
       <span>Primicia</span>
@@ -43,7 +48,7 @@
       <label>Monto
         <input type="text" placeholder="Ej. ₡50.000" disabled>
       </label>
-      <button class="btn primary" disabled>Próximamente</button>
+      <a class="btn primary" href="tel:88300202">Usar SINPE</a>
     </article>
   </div>
 </section>
