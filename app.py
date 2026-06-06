@@ -841,699 +841,478 @@ def migrate_usernames():
     print('Migración de usuarios completada.')
 
 
-# ---------------------------------------------------------------------------
-# Importación controlada de direcciones de grupos familiares
-# Fuente estructurada desde "Grupos Familiares.xlsx".
-# Uso recomendado: ejecutar una vez en Render Shell:
-#   flask import-group-addresses
-# ---------------------------------------------------------------------------
-GROUP_ADDRESS_IMPORT_DATA = [
+BULK_LEADERS_IMPORT_DATA = [
     {
         "name": "GRADELI DUARTE",
-        "source_name": "Gradeli",
-        "username": "gradeli.duarte",
-        "password": "85880490!",
+        "barrio": "LA GUARIA",
         "phone": "8588-0490",
-        "barrio": "La Guaria",
-        "address": "barrio la Guaria 1 200 este del salón comunal de Imas",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Gradeli Duarte"
+        "username": "GRADELI.DUARTE",
+        "password": "85880490!",
+        "observation": null
     },
     {
         "name": "JANNET MIRANDA",
-        "source_name": "Jannet Miranda Celula de niños y adolescentes",
-        "username": "jannet.miranda",
-        "password": "60010329!",
-        "phone": "6001-0329",
         "barrio": "INVU 2",
-        "address": "Invu #2",
-        "day": "Sábado",
-        "time": "Por definir",
-        "cell_name": "Célula Jannet Miranda"
+        "phone": "6001-0329",
+        "username": "JANNET.MIRANDA",
+        "password": "60010329!",
+        "observation": null
     },
     {
         "name": "MARITZA UGARTE",
-        "source_name": "Maritza Ugarte",
-        "username": "maritza.ugarte",
-        "password": "85939497!",
+        "barrio": "LA GUARIA",
         "phone": "8593-9497",
-        "barrio": "La Guaria",
-        "address": "Guaria 2 del antiguo danto300 norte y 75 al este",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Maritza Ugarte"
+        "username": "MARITZA.UGARTE",
+        "password": "85939497!",
+        "observation": null
     },
     {
         "name": "ERIKA ACEVEDO",
-        "source_name": "Ericka",
-        "username": "erika.acevedo",
-        "password": "87029708!",
+        "barrio": "MORACIA",
         "phone": "8702-9708",
-        "barrio": "Moracia",
-        "address": "150 noreste de la entrada de emergencias Moracia",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Erika Acevedo"
+        "username": "ERIKA.ACEVEDO",
+        "password": "87029708!",
+        "observation": null
     },
     {
         "name": "JOSE ANGEL SALAZAR",
-        "source_name": "José Ángel",
-        "username": "jose.salazar",
-        "password": "84436772!",
+        "barrio": "RESIDENCIAL DEL RIO",
         "phone": "8443-6772",
-        "barrio": "Residencial Del Río",
-        "address": "500 norte y 25 este de la entrada principal del residencial Río",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Jose Angel Salazar"
+        "username": "JOSE.SALAZAR",
+        "password": "84436772!",
+        "observation": null
     },
     {
         "name": "LEONARDO ALVAREZ",
-        "source_name": "Leonardo",
-        "username": "leonardo.alvarez",
-        "password": "85506266!",
+        "barrio": "MORACIA",
         "phone": "8550-6266",
-        "barrio": "Moracia",
-        "address": "Moracia, a la par de MH Partes",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Leonardo Alvarez"
+        "username": "LEONARDO.ALVAREZ",
+        "password": "85506266!",
+        "observation": null
     },
     {
         "name": "ROYMAN VALENCIA",
-        "source_name": "Royman",
-        "username": "royman.valencia",
-        "password": "64864275!",
+        "barrio": "BRASILIA",
         "phone": "6486-4275",
-        "barrio": "Brasilia",
-        "address": "75 norte del salón brasilia contigo a la bomba de agua",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Royman Valencia"
+        "username": "ROYMAN.VALENCIA",
+        "password": "64864275!",
+        "observation": null
     },
     {
         "name": "KENNETH CENTENO",
-        "source_name": "Kennet",
-        "username": "kenneth.centeno",
+        "barrio": "PUEBLO NUEVO",
+        "phone": "8666-5560",
+        "username": "KENNETH.CENTENO",
         "password": "86665560!",
-        "phone": "8666-1528",
-        "barrio": "Pueblo Nuevo",
-        "address": "Pueblo Nuevo, del salon comunal 100 sur y 100 al este",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Kenneth Centeno"
+        "observation": null
     },
     {
         "name": "GIOCONDA DE LA SEGURA LOPEZ",
-        "source_name": "Gioconda",
-        "username": "gioconda.lopez",
-        "password": "84247460!",
+        "barrio": "SAN ROQUE",
         "phone": "8424-7460",
-        "barrio": "San Roque",
-        "address": "barrio san Roque 300 este iglesia católica",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Gioconda De La Segura Lopez"
+        "username": "GIOCONDA.LOPEZ",
+        "password": "84247460!",
+        "observation": null
     },
     {
         "name": "ROBERT TALAVERA",
-        "source_name": "Robert Talabera",
-        "username": "robert.talavera",
-        "password": "60432882!",
+        "barrio": "SANTA LUISA",
         "phone": "6043-2882",
-        "barrio": "Santa Luisa",
-        "address": "Barrio Santa Luisa casa 459",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Robert Talavera"
+        "username": "ROBERT.TALAVERA",
+        "password": "60432882!",
+        "observation": null
     },
     {
         "name": "LINETH RUBIO",
-        "source_name": "Lineth Rubio",
-        "username": "lineth.rubio",
-        "password": "88447735!",
+        "barrio": "LA GUARIA",
         "phone": "8844-7735",
-        "barrio": "La Guaria",
-        "address": "Barrio la Guaria 2",
-        "day": "Por definir",
-        "time": "Por definir",
-        "cell_name": "Célula Lineth Rubio"
+        "username": "LINETH.RUBIO",
+        "password": "88447735!",
+        "observation": null
     },
     {
         "name": "JONATHAN MORENO",
-        "source_name": "Jonathan Moreno",
-        "username": "jonathan.moreno",
-        "password": "83287691!",
+        "barrio": "LA GALLERA",
         "phone": "8328-7691",
-        "barrio": "La Gallera",
-        "address": "Barrio La Gallera, 300 mts oeste del taller Rosales",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Jonathan Moreno"
+        "username": "JONATHAN.MORENO",
+        "password": "83287691!",
+        "observation": null
     },
     {
         "name": "ROLAND GARCIA",
-        "source_name": "Roland García",
-        "username": "roland.garcia",
-        "password": "87879497!",
+        "barrio": "MORACIA",
         "phone": "8787-9497",
-        "barrio": "Moracia",
-        "address": "B° Moracia 300 Mts, este de la panadería Sánchez.",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Roland Garcia"
+        "username": "ROLAND.GARCIA",
+        "password": "87879497!",
+        "observation": null
     },
     {
         "name": "GILBERTH ORDONEZ",
-        "source_name": "Gilberth Ordóñez",
-        "username": "gilberth.ordonez",
-        "password": "88260133!",
+        "barrio": "CORAZON DE JESUS / SAN ANTONIO",
         "phone": "8826-0133",
-        "barrio": "Corazón de Jesús",
-        "address": "Corazón de Jesús / San Antonio",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Gilberth Ordonez"
+        "username": "GILBERTH.ORDONEZ",
+        "password": "88260133!",
+        "observation": null
     },
     {
         "name": "HECTOR CABALCETA",
-        "source_name": "Héctor Cabalceta",
-        "username": "hector.cabalceta",
-        "password": "72909807!",
+        "barrio": "LA GUARIA",
         "phone": "7290-9807",
-        "barrio": "La Guaria",
-        "address": "B° La Guaria Del Salón Comunal de Imas 150 mts Esté",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Hector Cabalceta"
+        "username": "HECTOR.CABALCETA",
+        "password": "72909807!",
+        "observation": null
     },
     {
         "name": "SOBEIDA OBANDO",
-        "source_name": "Sobeida Obando",
-        "username": "sobeida.obando",
-        "password": "85252228!",
+        "barrio": "LOS ANGELES",
         "phone": "8525-2228",
-        "barrio": "Los Ángeles",
-        "address": "Los Ángeles",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Sobeida Obando"
+        "username": "SOBEIDA.OBANDO",
+        "password": "85252228!",
+        "observation": null
     },
     {
         "name": "LUIS CHAVES",
-        "source_name": "Luis Chaves",
-        "username": "luis.chaves",
-        "password": "88266293!",
+        "barrio": "FELIPE PEREZ",
         "phone": "8826-6293",
-        "barrio": "Felipe Pérez",
-        "address": "Felipe Perez Frente al play de la segunda etapa de Felipe Perez",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Luis Chaves"
+        "username": "LUIS.CHAVES",
+        "password": "88266293!",
+        "observation": null
     },
     {
         "name": "WENDY SANDOVAL",
-        "source_name": "Wendy Sandoval",
-        "username": "wendy.sandoval",
-        "password": "72253984!",
+        "barrio": "DANIEL ODUBER",
         "phone": "7225-3984",
-        "barrio": "Daniel Oduber",
-        "address": "B° Daniel Oduber, 100 m. Oeste y 300 Sur del Minisuper Chema #3.",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Wendy Sandoval"
+        "username": "WENDY.SANDOVAL",
+        "password": "72253984!",
+        "observation": null
     },
     {
         "name": "VANESSA TORRES",
-        "source_name": "Vanessa Torres",
-        "username": "vanessa.torres",
-        "password": "86776468!",
+        "barrio": "RESIDENCIAL DEL RIO",
         "phone": "8677-6468",
-        "barrio": "Residencial Del Río",
-        "address": "Residencial Del Río",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Vanessa Torres"
+        "username": "VANESSA.TORRES",
+        "password": "86776468!",
+        "observation": null
     },
     {
         "name": "GUSTAVO CASTILLO",
-        "source_name": "Gustavo Castillo",
-        "username": "gustavo.castillo",
-        "password": "88118073!",
+        "barrio": "MORACIA",
         "phone": "8811-8073",
-        "barrio": "Moracia",
-        "address": "B° Moracia 300 mts. Esté y 75 mts Norte del IPEC",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Gustavo Castillo"
+        "username": "GUSTAVO.CASTILLO",
+        "password": "88118073!",
+        "observation": null
     },
     {
         "name": "ANDREI CASTRO",
-        "source_name": "Andrei Castro",
-        "username": "andrei.castro",
-        "password": "87608356!",
+        "barrio": "LA CARRETA",
         "phone": "8760-8356",
-        "barrio": "La Carreta",
-        "address": "La Carreta Condominios La Carreta",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Andrei Castro"
+        "username": "ANDREI.CASTRO",
+        "password": "87608356!",
+        "observation": null
     },
     {
         "name": "RANDALL CORTES",
-        "source_name": "Randall Cortes",
-        "username": "randall.cortes",
-        "password": "70460451!",
+        "barrio": "EL PELONCITO",
         "phone": "7046-0451",
-        "barrio": "El Peloncito",
-        "address": "B° El Peloncito De la Escuela del Peloncito 300 mts. Sur última casa mano derecha.",
-        "day": "Por definir",
-        "time": "Por definir",
-        "cell_name": "Célula Randall Cortes"
+        "username": "RANDALL.CORTES",
+        "password": "70460451!",
+        "observation": null
     },
     {
         "name": "DAVID HERNANDEZ",
-        "source_name": "David Hernadez Dodero",
-        "username": "david.hernandez",
-        "password": "84134946!",
+        "barrio": "LA VICTORIA",
         "phone": "8413-4946",
-        "barrio": "La Gallera",
-        "address": "Barrio la Victoria, De la antigua gallera 200 sur",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula David Hernandez"
+        "username": "DAVID.HERNANDEZ",
+        "password": "84134946!",
+        "observation": null
     },
     {
         "name": "YORHANY RAMIREZ",
-        "source_name": "Yorhany Ramírez",
-        "username": "yorhany.ramirez",
-        "password": "89416174!",
+        "barrio": "LOS ALMENDRALES",
         "phone": "8941-6174",
-        "barrio": "Los Almendrales",
-        "address": "Los Almendrales",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Yorhany Ramirez"
-    },
-    {
-        "name": "ANGELICA PEREZ",
-        "source_name": "Angélica Pérez Tenorio",
-        "username": "angelica.perez",
-        "password": "72879236!",
-        "phone": "7287-9236",
-        "barrio": "Felipe Pérez",
-        "address": "Felipe Pérez, etapa1 Del Colegio, 100m sur y 150 oeste, en el callejón sin salida. Ante ante penúltima casa ,a mano derecha, verjas negras",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Angelica Perez"
+        "username": "YORHANY.RAMIREZ",
+        "password": "89416174!",
+        "observation": null
     },
     {
         "name": "JEREMY PINA",
-        "source_name": "Jeremy Peña",
-        "username": "jeremy.pina",
-        "password": "87549785!",
+        "barrio": "EL PELONCITO",
         "phone": "8754-9785",
-        "barrio": "El Peloncito",
-        "address": "Barrio Peloncito, del súper mercado Spiti 100 mtrs este y 25 norte",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Jeremy Pina"
+        "username": "JEREMY.PINA",
+        "password": "87549785!",
+        "observation": null
+    },
+    {
+        "name": "ANGELICA PEREZ",
+        "barrio": "FELIPE PEREZ",
+        "phone": "7287-9236",
+        "username": "ANGELICA.PEREZ",
+        "password": "72879236!",
+        "observation": null
     },
     {
         "name": "ISTELYN MARCHENA",
-        "source_name": "Istelyn Marchena",
-        "username": "istelyn.marchena",
-        "password": "87209378!",
+        "barrio": "LA VICTORIA",
         "phone": "8720-9378",
-        "barrio": "La Victoria",
-        "address": "Barrio la Victoria 50m este y 50m sur del súper económico",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Istelyn Marchena"
+        "username": "ISTELYN.MARCHENA",
+        "password": "87209378!",
+        "observation": null
     },
     {
         "name": "RICHARD SANTANA",
-        "source_name": "Richard Santana",
-        "username": "richard.santana",
-        "password": "84953414!",
+        "barrio": "PEDRO HERNANDEZ",
         "phone": "8495-3414",
-        "barrio": "Pedro Hernández",
-        "address": "Urbanización Pedro Hernández, quinta entrada mano izq, 2da casa",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Richard Santana"
+        "username": "RICHARD.SANTANA",
+        "password": "84953414!",
+        "observation": null
     },
     {
         "name": "DANILO GUTIERREZ",
-        "source_name": "Danilo Gutiérrez",
-        "username": "danilo.gutierrez",
-        "password": "60795230!",
+        "barrio": "NAZARET",
         "phone": "6079-5230",
-        "barrio": "Nazareth",
-        "address": "Nazaret",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Danilo Gutierrez"
+        "username": "DANILO.GUTIERREZ",
+        "password": "60795230!",
+        "observation": null
     },
     {
         "name": "ANGELICA QUINTERO",
-        "source_name": "Angelica Quintero",
-        "username": "angelica.quintero",
-        "password": "72623899!",
+        "barrio": "LA GUARIA",
         "phone": "7262-3899",
-        "barrio": "La Guaria",
-        "address": "Barrio la Guaria 200 mtr este del salón comunal del IMAS",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Angelica Quintero"
+        "username": "ANGELICA.QUINTERO",
+        "password": "72623899!",
+        "observation": null
     },
     {
         "name": "SARA SALAZAR",
-        "source_name": "Sara Salazar",
-        "username": "sara.salazar",
-        "password": "88847731!",
+        "barrio": "FELIPE PEREZ",
         "phone": "8884-7731",
-        "barrio": "Felipe Pérez",
-        "address": "Felipe Perez Del colegio artistico 100 sur y 25",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Sara Salazar"
+        "username": "SARA.SALAZAR",
+        "password": "88847731!",
+        "observation": null
     },
     {
         "name": "CRISTOPHER CASTILLO",
-        "source_name": "Cristopher Castillo.",
-        "username": "cristopher.castillo",
-        "password": "72981478!",
+        "barrio": "MORACIA",
         "phone": "7298-1478",
-        "barrio": "Moracia",
-        "address": "Moracia Del liceo nocturno 200 este y 25 al sur, casa mano derecha.",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Cristopher Castillo"
+        "username": "CRISTOPHER.CASTILLO",
+        "password": "72981478!",
+        "observation": null
     },
     {
         "name": "ABIGAIL VARGAS",
-        "source_name": "Abi Vargas",
-        "username": "abigail.vargas",
-        "password": "85845351!",
+        "barrio": "FELIPE PEREZ",
         "phone": "8584-5351",
-        "barrio": "Felipe Pérez",
-        "address": "Felipe Perez Del colegio artistico 200 sur y 75 este",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Abigail Vargas"
+        "username": "ABIGAIL.VARGAS",
+        "password": "85845351!",
+        "observation": null
     },
     {
         "name": "CECI RODRIGUEZ",
-        "source_name": "Ceci Rodríguez Viales",
-        "username": "ceci.rodriguez",
-        "password": "63279935!",
+        "barrio": "PUEBLO NUEVO",
         "phone": "6327-9935",
-        "barrio": "Pueblo Nuevo",
-        "address": "Pueblo Nuevo, detrás de Pulp. Las palmeras",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Ceci Rodriguez"
+        "username": "CECI.RODRIGUEZ",
+        "password": "63279935!",
+        "observation": null
     },
     {
         "name": "FERNANDA FONSECA",
-        "source_name": "Fernanda Fonseca",
-        "username": "fernanda.fonseca",
-        "password": "61231307!",
+        "barrio": "SAN ROQUE",
         "phone": "6123-1307",
-        "barrio": "San Roque",
-        "address": "Frente a la iglesia Ebenezer (San Roque)",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Fernanda Fonseca"
+        "username": "FERNANDA.FONSECA",
+        "password": "61231307!",
+        "observation": null
     },
     {
         "name": "PAUL DE TRINIDAD",
-        "source_name": "Paul Detrinidad",
-        "username": "paul.trinidad",
-        "password": "60572369!",
+        "barrio": "LAS PALMAS 1 CANAS",
         "phone": "6057-2369",
-        "barrio": "Cañas",
-        "address": "Cañas Guanacaste, Barrio las Palmas #1",
-        "day": "Miércoles",
-        "time": "Por definir",
-        "cell_name": "Célula Paul De Trinidad"
+        "username": "PAUL.TRINIDAD",
+        "password": "60572369!",
+        "observation": null
     },
     {
         "name": "ALLISON CAMPOS",
-        "source_name": "Allison Campos",
-        "username": "allison.campos",
-        "password": "83251664!",
+        "barrio": "CHOROTEGA",
         "phone": "8325-1664",
-        "barrio": "Chorotega",
-        "address": "B. chorotega",
-        "day": "Miércoles",
-        "time": "Por definir",
-        "cell_name": "Célula Allison Campos"
+        "username": "ALLISON.CAMPOS",
+        "password": "83251664!",
+        "observation": null
     },
     {
         "name": "MAYELA CHAVARRIA",
-        "source_name": "Mayela Chavarria",
-        "username": "mayela.chavarria",
-        "password": "87326608!",
+        "barrio": "SAN ROQUE",
         "phone": "8732-6608",
-        "barrio": "San Roque",
-        "address": "San Roque",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Mayela Chavarria"
+        "username": "MAYELA.CHAVARRIA",
+        "password": "87326608!",
+        "observation": null
     },
     {
         "name": "ANGELA LOPEZ",
-        "source_name": "Angela López",
-        "username": "angela.lopez",
-        "password": "71426027!",
+        "barrio": "EL CAMBALACHE",
         "phone": "7142-6027",
-        "barrio": "El Cambalache",
-        "address": "Barrio El Cambalache",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Angela Lopez"
+        "username": "ANGELA.LOPEZ",
+        "password": "71426027!",
+        "observation": null
     },
     {
         "name": "CHRISTOPHER",
-        "source_name": "Christopher",
-        "username": "christopher",
-        "password": "70859427!",
+        "barrio": "CORAZON DE JESUS",
         "phone": "7085-9427",
-        "barrio": "Corazón de Jesús",
-        "address": "Barrio Corazón de Jesús, casa contiguo del abastecedor Susy",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Christopher"
+        "username": "CHRISTOPHER",
+        "password": "70859427!",
+        "observation": "REVISAR APELLIDO"
     },
     {
-        "name": "NICOLE",
-        "source_name": "Nicole",
-        "username": "nicole",
-        "password": "72714430!",
-        "phone": "7271-4430",
-        "barrio": "Moracia",
-        "address": "Iglesia Hosanna (Barrio Moracia)",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Nicole"
-    },
-    {
-        "name": "Joset vilchez",
-        "source_name": "Joset vilchez",
-        "username": "joset.vilchez",
-        "password": "71332646!",
-        "phone": "7133-2646",
-        "barrio": "Corazón de Jesús",
-        "address": "Corazon de jesus",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Joset vilchez"
+        "name": "ESTEBAN LOPEZ",
+        "barrio": "SIN DIRECCION",
+        "phone": null,
+        "username": "ESTEBAN.LOPEZ",
+        "password": "Hosanna2026!",
+        "observation": "SIN TELEFONO PARA CONTRASENA"
     },
     {
         "name": "JOHN ESPINOSA",
-        "source_name": "John",
-        "username": "john.espinosa",
-        "password": "89462702!",
+        "barrio": "FELIPE PEREZ",
         "phone": "8946-2702",
-        "barrio": "Felipe Pérez",
-        "address": "Barrio Felipe Pérez, del Colegio Artístico 700m Este y 75m Sur",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula John Espinosa"
+        "username": "JOHN.ESPINOSA",
+        "password": "89462702!",
+        "observation": null
     },
     {
         "name": "OLGER CORTES",
-        "source_name": "Olger Cortés",
-        "username": "olger.cortes",
-        "password": "62066042!",
+        "barrio": "LINDA VISTA",
         "phone": "6206-6042",
-        "barrio": "Linda Vista",
-        "address": "Barrio linda vista",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Olger Cortes"
+        "username": "OLGER.CORTES",
+        "password": "62066042!",
+        "observation": null
     },
     {
         "name": "SOFIA ALVAREZ",
-        "source_name": "Sofía",
-        "username": "sofia.alvarez",
-        "password": "62122133!",
+        "barrio": "MORACIA",
         "phone": "6212-2133",
-        "barrio": "Moracia",
-        "address": "Barrio Moracia, casa contiguo a repuestos MH Partes",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Sofia Alvarez"
+        "username": "SOFIA.ALVAREZ",
+        "password": "62122133!",
+        "observation": null
+    },
+    {
+        "name": "ELEONORA MOLINA",
+        "barrio": "FELIPE PEREZ",
+        "phone": "6057-2379",
+        "username": "ELEONORA.MOLINA",
+        "password": "60572379!",
+        "observation": null
     },
     {
         "name": "CARLOS BERMUDEZ",
-        "source_name": "Carlos Bermudes",
-        "username": "carlos.bermudez",
-        "password": "",
-        "phone": "",
-        "barrio": "La Hulera",
-        "address": "Antigua Hulera",
-        "day": "Por definir",
-        "time": "Por definir",
-        "cell_name": "Célula Carlos Bermudez"
+        "barrio": "LA HULERA",
+        "phone": null,
+        "username": "CARLOS.BERMUDEZ",
+        "password": "Hosanna2026!",
+        "observation": "SIN TELEFONO PARA CONTRASENA"
     },
     {
         "name": "FABIAN PRENDAS",
-        "source_name": "Fabian Prendas",
-        "username": "fabian.prendas",
-        "password": "64003113!",
+        "barrio": "LA CRUZ",
         "phone": "6400-3113",
-        "barrio": "La Cruz",
-        "address": "Barrio La Cruz",
-        "day": "Sábado",
-        "time": "Por definir",
-        "cell_name": "Célula Fabian Prendas"
+        "username": "FABIAN.PRENDAS",
+        "password": "64003113!",
+        "observation": null
     },
     {
         "name": "VICTORIA REYES",
-        "source_name": "Victoria Reyes Medina",
-        "username": "victoria.reyes",
-        "password": "83885904!",
+        "barrio": "EL GALLO",
         "phone": "8388-5904",
-        "barrio": "El Gallo",
-        "address": "Barrio el Gallo 200 este y 300 norte de la iglesia evangelica",
-        "day": "Por definir",
-        "time": "Por definir",
-        "cell_name": "Célula Victoria Reyes"
+        "username": "VICTORIA.REYES",
+        "password": "83885904!",
+        "observation": null
     },
     {
         "name": "MINOR TALAVERA",
-        "source_name": "Minor Talavera",
-        "username": "minor.talavera",
-        "password": "89104270!",
+        "barrio": "PIJIJE",
         "phone": "8910-4270",
-        "barrio": "Pijije",
-        "address": "Pijije",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Minor Talavera"
+        "username": "MINOR.TALAVERA",
+        "password": "89104270!",
+        "observation": null
     },
     {
         "name": "ELI MENDEZ",
-        "source_name": "Elí Méndez Barrientos",
-        "username": "eli.mendez",
-        "password": "83722747!",
+        "barrio": "LOMA BONITA DE BELEN",
         "phone": "8372-2747",
-        "barrio": "Loma Bonita de Belén",
-        "address": "Barrio: Loma Bonita de Belén Del puente 100 N 3ra casa derecha color blanca",
-        "day": "Por definir",
-        "time": "Por definir",
-        "cell_name": "Célula Eli Mendez"
+        "username": "ELI.MENDEZ",
+        "password": "83722747!",
+        "observation": null
     },
     {
         "name": "MARJORIE BUSTOS",
-        "source_name": "Marjorie Bustos",
-        "username": "marjorie.bustos",
-        "password": "87794327!",
+        "barrio": "SANTA CRUZ",
         "phone": "8779-4327",
-        "barrio": "Santa Cruz",
-        "address": "Santa Cruz del salon comunal 850 m noroeste casa amono derecha",
-        "day": "Sábado",
-        "time": "Por definir",
-        "cell_name": "Célula Marjorie Bustos"
+        "username": "MARJORIE.BUSTOS",
+        "password": "87794327!",
+        "observation": null
     },
     {
         "name": "JEISON ROJAS",
-        "source_name": "Jeison Rojas",
-        "username": "jeison.rojas",
-        "password": "89714837!",
+        "barrio": "LA GUARIA",
         "phone": "8971-4837",
-        "barrio": "La Guaria",
-        "address": "La Guaria, a la del antiguo Danto",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Jeison Rojas"
+        "username": "JEISON.ROJAS",
+        "password": "89714837!",
+        "observation": null
     },
     {
         "name": "YENIER ORTIZ",
-        "source_name": "Yenier Ortiz",
-        "username": "yenier.ortiz",
-        "password": "70437674!",
+        "barrio": "SIN DIRECCION",
         "phone": "7043-7674",
-        "barrio": "Otro",
-        "address": "Dirección por definir",
-        "day": "Viernes",
-        "time": "Por definir",
-        "cell_name": "Célula Yenier Ortiz"
+        "username": "YENIER.ORTIZ",
+        "password": "70437674!",
+        "observation": null
     },
     {
         "name": "ELIAS AGUILAR",
-        "source_name": "Elias Aguilar",
-        "username": "elias.aguilar",
-        "password": "63238586!",
+        "barrio": "LA GALLERA",
         "phone": "6323-8586",
-        "barrio": "La Gallera",
-        "address": "La Gallera",
-        "day": "Lunes",
-        "time": "Por definir",
-        "cell_name": "Célula Elias Aguilar"
+        "username": "ELIAS.AGUILAR",
+        "password": "63238586!",
+        "observation": null
     }
 ]
 
-def import_status_for_address(address):
-    address = (address or '').strip()
-    if not address or address.lower() in ['dirección por definir', 'direccion por definir', 'por definir']:
-        return 'paused'
-    return 'active'
+def normalize_import_username(value):
+    return slug_username(value or '')
 
-@app.cli.command('import-group-addresses')
-def import_group_addresses():
-    """Crea/actualiza células con direcciones y días desde la lista oficial de grupos.
-    Idempotente: si se ejecuta otra vez, no duplica; actualiza por usuario/teléfono.
-    No borra datos manuales. No sobreescribe coordenadas, Maps ni Waze.
+def title_name(value):
+    return ' '.join([p.capitalize() for p in (value or '').strip().split()])
+
+def normalize_import_barrio(value):
+    raw = (value or '').strip()
+    if not raw or raw.upper() == 'SIN DIRECCION':
+        return 'Otro', 'Por definir'
+    # Si existe en la lista oficial, usarlo directo manteniendo formato título.
+    for b in BARRIOS_LIBERIA:
+        if b.lower() == raw.lower():
+            return b, None
+    return 'Otro', title_name(raw)
+
+@app.cli.command('import-leaders-cells')
+def import_leaders_cells():
+    """Importa líderes y crea células esqueleto desde la base inicial.
+    Es idempotente: si se ejecuta otra vez, actualiza sin duplicar por usuario/líder.
     """
     db.create_all()
-    created_users = updated_users = created_cells = updated_cells = skipped = 0
+    created_users = updated_users = created_cells = updated_cells = 0
+    skipped = []
 
-    for row in GROUP_ADDRESS_IMPORT_DATA:
-        raw_username = (row.get('username') or row.get('name') or '').strip()
-        username = slug_username(raw_username)
-        name = (row.get('name') or '').strip().title()
-        phone = format_cr_phone(row.get('phone') or '')
-        phone_digits = clean_phone(phone)
-        password = (row.get('password') or '').strip()
-        address = (row.get('address') or 'Dirección por definir').strip()
-        barrio = (row.get('barrio') or 'Otro').strip()
-        day = (row.get('day') or 'Por definir').strip()
-        time = (row.get('time') or 'Por definir').strip()
-        cell_name = (row.get('cell_name') or f'Célula {name}').strip()
+    for row in BULK_LEADERS_IMPORT_DATA:
+        name = title_name(row.get('name'))
+        username = normalize_import_username(row.get('username') or name)
+        phone = format_cr_phone(row.get('phone')) if row.get('phone') else None
+        password = row.get('password') or 'Hosanna2026!'
+        barrio, barrio_other = normalize_import_barrio(row.get('barrio'))
 
         if not name or not username:
-            skipped += 1
+            skipped.append(row)
             continue
 
         user = User.query.filter_by(username=username).first()
-        if not user and phone_digits:
-            user = User.query.filter(User.phone.like(f'%{phone_digits[:4]}%')).first()
-
         if not user:
             user = User(
                 name=name,
@@ -1541,62 +1320,66 @@ def import_group_addresses():
                 email=None,
                 phone=phone,
                 role='leader',
-                active=True
+                active=True,
             )
-            if password:
-                user.set_password(password)
-            else:
-                user.set_password(random_password())
+            user.set_password(password)
             db.session.add(user)
             db.session.flush()
             created_users += 1
         else:
-            user.name = user.name or name
-            user.username = user.username or username
-            user.phone = phone or user.phone
+            user.name = name
+            user.phone = phone
             user.role = 'leader'
             user.active = True
+            # Reaplica la contraseña del Excel para que las credenciales queden exactas.
+            user.set_password(password)
             updated_users += 1
 
+        cell_name = f'Célula {name}'
         cell = Cell.query.filter_by(leader_id=user.id).first()
         if not cell:
             cell = Cell(
                 name=cell_name,
                 leader_id=user.id,
                 barrio=barrio,
-                barrio_other=None if barrio != 'Otro' else None,
-                address=address,
-                day=day,
-                time=time,
-                phone=phone or user.phone,
-                description='Grupo familiar.',
-                status=import_status_for_address(address)
+                barrio_other=barrio_other,
+                address='Dirección por definir',
+                day='Por definir',
+                time='Por definir',
+                phone=phone,
+                description='Grupo familiar pendiente de completar información.',
+                status='paused',
             )
             db.session.add(cell)
             created_cells += 1
         else:
             cell.name = cell.name or cell_name
             cell.leader_id = user.id
-            cell.barrio = barrio or cell.barrio
-            cell.address = address or cell.address or 'Dirección por definir'
-            cell.day = day or cell.day or 'Por definir'
-            cell.time = time or cell.time or 'Por definir'
-            cell.phone = phone or cell.phone or user.phone
-            if not cell.description or 'pendiente' in (cell.description or '').lower():
-                cell.description = 'Grupo familiar.'
-            if address and address.lower() not in ['dirección por definir', 'direccion por definir', 'por definir']:
-                cell.status = 'active'
-            else:
-                cell.status = cell.status or 'paused'
+            cell.barrio = barrio
+            cell.barrio_other = barrio_other
+            cell.phone = cell.phone or phone
+            if not cell.address or cell.address in ['None', '']:
+                cell.address = 'Dirección por definir'
+            if not cell.day:
+                cell.day = 'Por definir'
+            if not cell.time:
+                cell.time = 'Por definir'
+            if not cell.description:
+                cell.description = 'Grupo familiar pendiente de completar información.'
+            # No sobreescribir status si ya fue activada por admin/líder.
+            cell.status = cell.status or 'paused'
             updated_cells += 1
 
     db.session.commit()
-    print('Importación de direcciones completada.')
+    print(f'Importación completada.')
     print(f'Líderes creados: {created_users}')
     print(f'Líderes actualizados: {updated_users}')
     print(f'Células creadas: {created_cells}')
     print(f'Células actualizadas: {updated_cells}')
-    print(f'Omitidos: {skipped}')
+    print(f'Omitidos: {len(skipped)}')
+    if skipped:
+        print(skipped)
+
 
 @app.errorhandler(403)
 def e403(e): return render_template('errors/error.html', code=403, title='Acceso restringido', message='No tenés permiso para entrar a esta sección.'),403
