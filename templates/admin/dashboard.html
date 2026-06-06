@@ -1,9 +1,9 @@
 {% extends 'base.html' %}{% block content %}
 <section class="dash-head fade-up shell">
   <div>
-    <p class="eyebrow">Panel administrativo</p>
+    <p class="eyebrow">{{ 'Panel administrativo' if current_user.role == 'admin' else 'Panel mentor' }}</p>
     <h1>Gestión de células</h1>
-    <p>Administrá líderes, horarios, barrios y ubicaciones exactas desde un solo lugar.</p>
+    <p>{{ 'Administrá líderes, horarios, barrios y ubicaciones exactas desde un solo lugar.' if current_user.role == 'admin' else 'Creá líderes y células sin permisos de edición o eliminación.' }}</p>
   </div>
   <div class="actions">
     <a class="btn primary" href="{{ url_for('admin_cell_new') }}"><span class="icon plus"></span>Nueva célula</a>

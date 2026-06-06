@@ -1,10 +1,10 @@
 import os, re, math, secrets, string
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -26,6 +26,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Iniciá sesión para continuar.'
+SESSION_TIMEOUT_MINUTES = int(os.getenv('SESSION_TIMEOUT_MINUTES', '10'))
 
 DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
 HOURS = [f'{h:02d}:{m:02d}' for h in range(5, 23) for m in (0, 30)]
@@ -47,6 +48,8 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(20), nullable=False, default='leader') # admin, leader, member-reserved
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    current_session_token = db.Column(db.String(120), nullable=True)
+    last_seen_at = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -84,19 +87,25 @@ class LeadRequest(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def admin_required(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.role != 'admin': abort(403)
-        return fn(*args, **kwargs)
-    return wrapper
+def roles_required(*roles):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            if not current_user.is_authenticated or current_user.role not in roles:
+                abort(403)
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
 
-def leader_required(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.role not in ['admin','leader']: abort(403)
-        return fn(*args, **kwargs)
-    return wrapper
+admin_required = roles_required('admin')
+manager_required = roles_required('admin', 'mentor')
+leader_required = roles_required('admin', 'mentor', 'leader')
+
+def is_admin():
+    return current_user.is_authenticated and current_user.role == 'admin'
+
+def is_manager():
+    return current_user.is_authenticated and current_user.role in ['admin', 'mentor']
 
 def clean_phone(phone):
     return re.sub(r'\D+', '', phone or '')
@@ -223,6 +232,33 @@ def ensure_admin_user(reset_password=False):
     db.session.commit()
     return admin
 
+def ensure_mentor_user(reset_password=False):
+    username = (os.getenv('MENTOR_USERNAME', 'mentor') or 'mentor').strip().lower()
+    password = os.getenv('MENTOR_PASSWORD')
+    if not password:
+        return None
+    name = (os.getenv('MENTOR_NAME', 'Mentor Hosanna') or 'Mentor Hosanna').strip()
+    email = (os.getenv('MENTOR_EMAIL', '') or '').strip().lower() or None
+    phone = (os.getenv('MENTOR_PHONE', '') or '').strip() or None
+    mentor = User.query.filter_by(username=username).first()
+    if not mentor:
+        mentor = User(name=name, username=username, email=email, phone=phone, role='mentor', active=True)
+        mentor.set_password(password)
+        db.session.add(mentor)
+    else:
+        mentor.name = mentor.name or name
+        mentor.role = 'mentor'
+        mentor.active = True
+        if email and mentor.email != email:
+            mentor.email = email
+        if phone and mentor.phone != phone:
+            mentor.phone = phone
+        if reset_password:
+            mentor.set_password(password)
+    db.session.commit()
+    return mentor
+
+
 def send_sms(to, body):
     sid = os.getenv('TWILIO_ACCOUNT_SID')
     token = os.getenv('TWILIO_AUTH_TOKEN')
@@ -247,7 +283,39 @@ def validate_cell_form(form):
 
 @app.context_processor
 def inject_globals():
-    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link)
+    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager)
+
+
+@app.before_request
+def enforce_session_security():
+    if not current_user.is_authenticated:
+        return
+    now = datetime.utcnow()
+    last_raw = session.get('last_activity_at')
+    if last_raw:
+        try:
+            last = datetime.fromisoformat(last_raw)
+            if now - last > timedelta(minutes=SESSION_TIMEOUT_MINUTES):
+                current_user.current_session_token = None
+                db.session.commit()
+                logout_user()
+                session.clear()
+                flash('Tu sesión se cerró por inactividad.', 'warning')
+                return redirect(url_for('login'))
+        except Exception:
+            session.clear()
+            logout_user()
+            flash('Tu sesión expiró. Iniciá sesión nuevamente.', 'warning')
+            return redirect(url_for('login'))
+    token = session.get('session_token')
+    if not token or current_user.current_session_token != token:
+        logout_user()
+        session.clear()
+        flash('Esta cuenta inició sesión en otro dispositivo. Por seguridad se cerró esta sesión.', 'warning')
+        return redirect(url_for('login'))
+    session['last_activity_at'] = now.isoformat()
+    current_user.last_seen_at = now
+    db.session.commit()
 
 @app.route('/')
 def public_home():
@@ -283,15 +351,25 @@ def login():
         if not user or not user.active or not user.check_password(password):
             flash('Credenciales incorrectas o usuario inactivo.', 'danger')
             return redirect(url_for('login'))
+        token = secrets.token_urlsafe(32)
+        user.current_session_token = token
+        user.last_seen_at = datetime.utcnow()
+        db.session.commit()
+        session.clear()
+        session['session_token'] = token
+        session['last_activity_at'] = datetime.utcnow().isoformat()
         login_user(user)
-        if user.role == 'admin': return redirect(url_for('admin_dashboard'))
+        if user.role in ['admin', 'mentor']: return redirect(url_for('admin_dashboard'))
         return redirect(url_for('leader_dashboard'))
     return render_template('auth/login.html')
 
 @app.route('/logout')
 @login_required
 def logout():
-    logout_user(); flash('Sesión cerrada correctamente.', 'success'); return redirect(url_for('public_home'))
+    if current_user.is_authenticated:
+        current_user.current_session_token = None
+        db.session.commit()
+    logout_user(); session.clear(); flash('Sesión cerrada correctamente.', 'success'); return redirect(url_for('public_home'))
 
 
 @app.route('/account/password', methods=['GET','POST'])
@@ -313,12 +391,12 @@ def change_password():
         current_user.set_password(new)
         db.session.commit()
         flash('Contraseña actualizada correctamente.', 'success')
-        return redirect(url_for('admin_dashboard') if current_user.role == 'admin' else url_for('leader_dashboard'))
+        return redirect(url_for('admin_dashboard') if current_user.role in ['admin','mentor'] else url_for('leader_dashboard'))
     return render_template('account/change_password.html')
 
 @app.route('/admin')
 @login_required
-@admin_required
+@manager_required
 def admin_dashboard():
     stats = {'cells':Cell.query.count(),'active':Cell.query.filter_by(status='active').count(),'leaders':User.query.filter_by(role='leader').count(),'requests':LeadRequest.query.count()}
     recent = Cell.query.order_by(Cell.created_at.desc()).limit(6).all()
@@ -326,13 +404,13 @@ def admin_dashboard():
 
 @app.route('/admin/cells')
 @login_required
-@admin_required
+@manager_required
 def admin_cells():
     return render_template('admin/cells.html', cells=Cell.query.order_by(Cell.created_at.desc()).all())
 
 @app.route('/admin/cells/new', methods=['GET','POST'])
 @login_required
-@admin_required
+@manager_required
 def admin_cell_new():
     leaders = User.query.filter_by(role='leader', active=True).order_by(User.name).all()
     if request.method == 'POST':
@@ -390,7 +468,7 @@ def admin_cell_delete(cell_id):
 
 @app.route('/admin/leaders', methods=['GET','POST'])
 @login_required
-@admin_required
+@manager_required
 def admin_leaders():
     generated = None
     if request.method == 'POST':
@@ -416,6 +494,52 @@ def admin_leaders():
     return render_template('admin/leaders.html', leaders=User.query.filter_by(role='leader').order_by(User.created_at.desc()).all(), generated=generated)
 
 
+
+
+@app.route('/admin/leaders/<int:leader_id>/edit', methods=['GET','POST'])
+@login_required
+@admin_required
+def admin_leader_edit(leader_id):
+    u = User.query.get_or_404(leader_id)
+    if u.role not in ['leader', 'mentor']:
+        abort(403)
+    if request.method == 'POST':
+        name = request.form.get('name','').strip()
+        username = slug_username(request.form.get('username',''))
+        email = (request.form.get('email') or '').lower().strip() or None
+        phone_digits = clean_phone(request.form.get('phone',''))
+        phone = format_cr_phone(phone_digits) if phone_digits else None
+        role = request.form.get('role') or u.role
+        active = request.form.get('active') == 'on'
+        password = request.form.get('password') or ''
+        if role not in ['leader','mentor']:
+            role = 'leader'
+        if not name:
+            flash('Nombre es obligatorio.', 'danger')
+            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+        if not username:
+            flash('Usuario es obligatorio.', 'danger')
+            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+        if User.query.filter(User.username == username, User.id != u.id).first():
+            flash('Ese usuario ya está en uso.', 'danger')
+            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+        if email and User.query.filter(User.email == email, User.id != u.id).first():
+            flash('Ese correo ya está en uso.', 'danger')
+            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+        if phone_digits and len(phone_digits) != 8:
+            flash('El teléfono debe tener 8 dígitos. Ejemplo: 8888-8888.', 'danger')
+            return redirect(url_for('admin_leader_edit', leader_id=u.id))
+        u.name = name; u.username = username; u.email = email; u.phone = phone; u.role = role; u.active = active
+        if password:
+            if len(password) < 8:
+                flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger')
+                return redirect(url_for('admin_leader_edit', leader_id=u.id))
+            u.set_password(password)
+            u.current_session_token = None
+        db.session.commit()
+        flash('Usuario actualizado correctamente.', 'success')
+        return redirect(url_for('admin_leaders'))
+    return render_template('admin/leader_edit.html', leader=u)
 
 @app.route('/admin/leaders/<int:leader_id>/credentials', methods=['POST'])
 @login_required
@@ -460,7 +584,7 @@ def admin_leader_delete(leader_id):
 @leader_required
 def leader_dashboard():
     c = Cell.query.filter_by(leader_id=current_user.id).first() if current_user.role=='leader' else None
-    if current_user.role == 'admin': return redirect(url_for('admin_dashboard'))
+    if current_user.role in ['admin','mentor']: return redirect(url_for('admin_dashboard'))
     return render_template('leader/dashboard.html', cell=c)
 
 @app.route('/leader/cell/update', methods=['POST'])
@@ -496,12 +620,26 @@ def init_db():
 
 @app.cli.command('upgrade-db')
 def upgrade_db():
-    db.create_all(); print('Base actualizada.')
+    db.create_all()
+    from sqlalchemy import text
+    engine_name = db.engine.url.get_backend_name()
+    with db.engine.begin() as conn:
+        if engine_name.startswith('postgresql'):
+            conn.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS current_session_token VARCHAR(120)'))
+            conn.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP'))
+        else:
+            cols = [r[1] for r in conn.execute(text('PRAGMA table_info(user)')).fetchall()]
+            if 'current_session_token' not in cols:
+                conn.execute(text('ALTER TABLE user ADD COLUMN current_session_token VARCHAR(120)'))
+            if 'last_seen_at' not in cols:
+                conn.execute(text('ALTER TABLE user ADD COLUMN last_seen_at TIMESTAMP'))
+    print('Base actualizada.')
 
 @app.cli.command('ensure-admin')
 def ensure_admin():
     reset = (os.getenv('ADMIN_RESET_ON_DEPLOY', '').lower() in ['1','true','yes','on'])
     ensure_admin_user(reset_password=reset)
+    ensure_mentor_user(reset_password=reset)
     print('Admin verificado correctamente.' + (' Contraseña actualizada.' if reset else ''))
 
 @app.cli.command('reset-admin-password')
@@ -513,7 +651,8 @@ def reset_admin_password():
 def seed():
     """Datos mínimos: solo asegura admin. No crea líderes/células demo en producción."""
     ensure_admin_user(reset_password=False)
-    print('Seed mínimo completado: admin verificado.')
+    ensure_mentor_user(reset_password=False)
+    print('Seed mínimo completado: admin/mentor verificados.')
 
 
 @app.cli.command('migrate-usernames')

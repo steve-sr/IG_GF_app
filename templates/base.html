@@ -27,8 +27,8 @@
     </a>
     <div class="nav-actions">
       {% if current_user.is_authenticated %}
-        {% if current_user.role=='admin' %}
-          <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+        {% if current_user.role in ['admin','mentor'] %}
+          <a href="{{ url_for('admin_dashboard') }}">{{ 'Admin' if current_user.role == 'admin' else 'Mentor' }}</a>
         {% else %}
           <a href="{{ url_for('leader_dashboard') }}">Mi célula</a>
         {% endif %}

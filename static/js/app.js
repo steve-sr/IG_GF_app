@@ -139,3 +139,16 @@ document.addEventListener('click', async (e)=>{
     if(typeof toast==='function') toast('No se pudo copiar el mensaje.', 'danger');
   }
 });
+
+
+// Client-side inactivity guard. Server also validates every protected request.
+(function(){
+  const meta = document.body?.dataset || {};
+  const isLogged = document.querySelector('.nav-actions a[href$="/logout"]');
+  if(!isLogged) return;
+  const timeoutMs = 10 * 60 * 1000;
+  let timer;
+  const reset=()=>{ clearTimeout(timer); timer=setTimeout(()=>{ window.location.href='/logout?reason=inactive'; }, timeoutMs); };
+  ['click','mousemove','keydown','touchstart','scroll'].forEach(evt=>document.addEventListener(evt, reset, {passive:true}));
+  reset();
+})();

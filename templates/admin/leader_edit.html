@@ -1,0 +1,43 @@
+{% extends 'base.html' %}{% block content %}
+<section class="dash-head shell leader-page-head fade-up">
+  <div>
+    <p class="eyebrow">Admin</p>
+    <h1>Editar usuario</h1>
+    <p>Actualizá datos del líder o mentor. Si cambiás la contraseña, las sesiones abiertas se cerrarán.</p>
+  </div>
+  <a class="btn ghost" href="{{ url_for('admin_leaders') }}"><span class="icon arrow-left"></span>Volver</a>
+</section>
+<form method="post" class="form panel smart-form shell leader-shell fade-up" novalidate>
+  <div class="form-section leader-form-section">
+    <div class="form-section-head"><div><h3>Información del usuario</h3><p>Solo el administrador puede editar estos datos.</p></div></div>
+    <div class="grid two leader-grid">
+      <label>Nombre
+        <input name="name" required data-label="Nombre" autocomplete="name" placeholder="Ej. Felipe Pérez" value="{{ leader.name }}">
+      </label>
+      <label>Usuario
+        <input name="username" required data-label="Usuario" data-format="username" autocomplete="username" placeholder="Ej. felipe.perez" value="{{ leader.username }}">
+      </label>
+      <label>Correo (opcional)
+        <input name="email" type="email" data-label="Correo" autocomplete="email" placeholder="Ej. felipe@correo.com" value="{{ leader.email or '' }}">
+      </label>
+      <label>Teléfono
+        <input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="9" placeholder="Ej. 8888-8888" value="{{ leader.phone or '' }}">
+      </label>
+      <label>Rol
+        <select name="role" required data-label="Rol">
+          <option value="leader" {% if leader.role=='leader' %}selected{% endif %}>Líder</option>
+          <option value="mentor" {% if leader.role=='mentor' %}selected{% endif %}>Mentor</option>
+        </select>
+      </label>
+      <label>Nueva contraseña (opcional)
+        <input name="password" data-label="Contraseña" autocomplete="new-password" placeholder="Dejar vacío para no cambiar">
+      </label>
+    </div>
+  </div>
+  <div class="option-row compact leader-sms-row">
+    <div><strong>Usuario activo</strong><p>Si se desactiva, no podrá iniciar sesión.</p></div>
+    <label class="switch" aria-label="Usuario activo"><input type="checkbox" name="active" {% if leader.active %}checked{% endif %}><span></span></label>
+  </div>
+  <button class="btn primary full"><span class="icon edit"></span>Guardar cambios</button>
+</form>
+{% endblock %}
