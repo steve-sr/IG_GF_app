@@ -268,3 +268,9 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
 .icon.grid{
   mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"/></svg>')!important;
 }
+
+/* Google Maps link resolver */
+.input-action{display:flex;align-items:center;gap:10px;width:100%;}
+.input-action input{flex:1;min-width:0;}
+.btn.mini{padding:10px 14px;min-height:42px;border-radius:16px;font-size:13px;white-space:nowrap;}
+@media (max-width: 640px){.input-action{flex-direction:column;align-items:stretch}.btn.mini{width:100%;justify-content:center}}

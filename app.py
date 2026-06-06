@@ -171,15 +171,53 @@ def waze_url(lat, lng):
 
 def extract_coords(text):
     if not text: return None, None
-    patterns = [r'@(-?\d+\.\d+),(-?\d+\.\d+)', r'q=(-?\d+\.\d+),(-?\d+\.\d+)', r'query=(-?\d+\.\d+),(-?\d+\.\d+)']
-    for p in patterns:
-        m = re.search(p, text)
-        if m: return float(m.group(1)), float(m.group(2))
+    text = str(text)
+    patterns = [
+        r'@(-?\d+\.\d+),(-?\d+\.\d+)',
+        r'[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)',
+        r'[?&]query=(-?\d+\.\d+),(-?\d+\.\d+)',
+        r'[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)',
+        r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)',
+        r'%213d(-?\d+\.\d+)%214d(-?\d+\.\d+)',
+    ]
+    for pattern in patterns:
+        m = re.search(pattern, text)
+        if m:
+            lat, lng = float(m.group(1)), float(m.group(2))
+            if -90 <= lat <= 90 and -180 <= lng <= 180:
+                return lat, lng
     nums = re.findall(r'-?\d+\.\d+', text)
-    if len(nums) >= 2:
-        lat, lng = float(nums[0]), float(nums[1])
-        if -90 <= lat <= 90 and -180 <= lng <= 180: return lat, lng
+    for i in range(0, max(0, len(nums)-1)):
+        lat, lng = float(nums[i]), float(nums[i+1])
+        if -90 <= lat <= 90 and -180 <= lng <= 180:
+            return lat, lng
     return None, None
+
+
+def resolve_google_maps_link(raw_url):
+    """Intenta extraer coordenadas desde links normales o cortos de Google Maps."""
+    raw_url = (raw_url or '').strip()
+    lat, lng = extract_coords(raw_url)
+    if lat is not None and lng is not None:
+        return lat, lng, raw_url
+
+    if not raw_url.startswith(('http://', 'https://')):
+        raise ValueError('Pegá un link válido de Google Maps.')
+
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(raw_url, allow_redirects=True, timeout=10, headers=headers)
+    final_url = response.url or raw_url
+
+    lat, lng = extract_coords(final_url)
+    if lat is not None and lng is not None:
+        return lat, lng, final_url
+
+    # Algunas respuestas incluyen las coordenadas dentro del HTML inicial.
+    lat, lng = extract_coords(response.text[:250000])
+    if lat is not None and lng is not None:
+        return lat, lng, final_url
+
+    raise ValueError('No pude detectar coordenadas en ese link. Probá abrirlo en Google Maps y copiar el enlace completo.')
 
 def distance_km(lat1, lon1, lat2, lon2):
     r = 6371
@@ -741,6 +779,30 @@ def leader_cell_update():
     if c.latitude is not None and c.longitude is not None:
         c.google_maps_url = maps_url(c.latitude,c.longitude); c.waze_url = waze_url(c.latitude,c.longitude)
     db.session.commit(); flash('Información actualizada.', 'success'); return redirect(url_for('leader_dashboard'))
+
+@app.route('/api/resolve-maps-url', methods=['POST'])
+@login_required
+def api_resolve_maps_url():
+    if current_user.role not in ['admin', 'mentor', 'leader']:
+        abort(403)
+    data = request.get_json(silent=True) or {}
+    raw_url = (data.get('url') or '').strip()
+    if not raw_url:
+        return jsonify({'ok': False, 'message': 'Pegá primero un link de Google Maps.'}), 400
+    try:
+        lat, lng, resolved_url = resolve_google_maps_link(raw_url)
+    except Exception as exc:
+        return jsonify({'ok': False, 'message': str(exc)}), 400
+    return jsonify({
+        'ok': True,
+        'latitude': round(float(lat), 7),
+        'longitude': round(float(lng), 7),
+        'maps': maps_url(lat, lng),
+        'waze': waze_url(lat, lng),
+        'resolved_url': resolved_url,
+        'message': 'Ubicación extraída del link. Guardá los cambios para aplicarla.'
+    })
+
 
 @app.route('/api/cells/<int:cell_id>/location', methods=['POST'])
 @login_required

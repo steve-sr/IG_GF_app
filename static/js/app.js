@@ -36,6 +36,32 @@ function openConfirmModal(title,message,onConfirm){
 }
 qsa('form[data-confirm]').forEach(form=>{form.addEventListener('submit',e=>{if(form.dataset.confirmed==='1')return; e.preventDefault(); openConfirmModal(form.dataset.confirm,form.dataset.confirmMessage,()=>{form.dataset.confirmed='1'; form.submit();});});});
 
+
+// Extract coordinates from a pasted Google Maps link, including shared links from WhatsApp.
+qs('#resolveMapsBtn')?.addEventListener('click', async (e)=>{
+  const btn=e.currentTarget;
+  const input=qs('#mapsInput');
+  const raw=(input?.value||'').trim();
+  const original=btn.innerHTML;
+  if(!raw){toast('Pegá primero el link de Google Maps.','danger'); input?.focus(); return;}
+  try{
+    btn.disabled=true;
+    btn.innerHTML='<span class="icon location"></span>Localizando...';
+    const r=await fetch('/api/resolve-maps-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:raw})});
+    const data=await r.json();
+    if(!data.ok) throw new Error(data.message||'No se pudo extraer la ubicación.');
+    setLocationInputs(String(data.latitude), String(data.longitude));
+    if(qs('#mapsInput')) qs('#mapsInput').value = data.maps || raw;
+    if(qs('#wazeInput')) qs('#wazeInput').value = data.waze || '';
+    toast(data.message || 'Ubicación extraída del link. Guardá los cambios.','success');
+  }catch(err){
+    toast(err.message || 'No se pudo extraer la ubicación del link.','danger');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML=original;
+  }
+});
+
 // Map picker: manually point the cell location on a map.
 (function(){
   const openBtn = qs('#openMapPicker');
