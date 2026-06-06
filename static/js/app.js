@@ -178,3 +178,20 @@ document.addEventListener('click', async (e)=>{
   ['click','mousemove','keydown','touchstart','scroll'].forEach(evt=>document.addEventListener(evt, reset, {passive:true}));
   reset();
 })();
+
+// Responsive navbar
+(function(){
+  const btn = qs('.nav-toggle');
+  const menu = qs('#mainNavMenu');
+  if(!btn || !menu) return;
+  btn.addEventListener('click',()=>{
+    const open = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('click',e=>{
+    if(!menu.classList.contains('open')) return;
+    if(e.target.closest('.nav')) return;
+    menu.classList.remove('open');
+    btn.setAttribute('aria-expanded','false');
+  });
+})();

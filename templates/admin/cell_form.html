@@ -10,6 +10,8 @@
       <label id="otherBarrioWrap" class="hidden">Otro barrio<input name="barrio_other" value="{{cell.barrio_other if cell else ''}}" placeholder="Escribí el barrio"></label>
       <label>Día<select name="day" required data-label="Día"><option value="">Seleccionar</option>{% for d in DAYS %}<option value="{{d}}" {% if cell and cell.day==d %}selected{% endif %}>{{d}}</option>{% endfor %}</select></label>
       <label>Hora<select name="time" required data-label="Hora"><option value="">Seleccionar</option>{% for h in HOURS %}<option value="{{h}}" {% if cell and cell.time==h %}selected{% endif %}>{{h}}</option>{% endfor %}</select></label>
+      <label>Tipo de célula<select name="cell_type">{% for value,label in CELL_TYPES %}<option value="{{value}}" {% if cell and cell.cell_type==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>
+      <label class="check-card"><input type="checkbox" name="has_children_teacher" {% if cell and cell.has_children_teacher %}checked{% endif %}><span>Cuenta con maestra de niños</span></label>
     </div>
     <label>Dirección<textarea name="address" required data-label="Dirección" placeholder="Dirección visible para visitantes">{{ cell.address if cell else '' }}</textarea></label>
   </div>

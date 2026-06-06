@@ -23,12 +23,22 @@
       <label>Teléfono
         <input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="9" placeholder="Ej. 8888-8888" value="{{ leader.phone or '' }}">
       </label>
+      {% if current_user.role == 'admin' %}
       <label>Rol
         <select name="role" required data-label="Rol">
           <option value="leader" {% if leader.role=='leader' %}selected{% endif %}>Líder</option>
           <option value="mentor" {% if leader.role=='mentor' %}selected{% endif %}>Mentor</option>
         </select>
       </label>
+      {% endif %}
+      <label>Sector
+        <select name="sector"><option value="">Sin sector</option>{% for s in SECTORS %}<option value="{{s}}" {% if leader.sector==s %}selected{% endif %}>{{s}}</option>{% endfor %}</select>
+      </label>
+      {% if current_user.role == 'admin' and leader.role == 'leader' %}
+      <label>Mentor asignado
+        <select name="mentor_id"><option value="">Sin mentor</option>{% for m in mentors %}<option value="{{m.id}}" {% if leader.mentor_id==m.id %}selected{% endif %}>{{m.name}}{% if m.sector %} · {{m.sector}}{% endif %}</option>{% endfor %}</select>
+      </label>
+      {% endif %}
       <label>Nueva contraseña (opcional)
         <input name="password" data-label="Contraseña" autocomplete="new-password" placeholder="Dejar vacío para no cambiar">
       </label>

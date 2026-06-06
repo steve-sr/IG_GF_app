@@ -43,6 +43,42 @@ BARRIOS_LIBERIA = [
     'Irigaray','Cañas Dulces','Mayorga','Quebrada Grande','Nacascolo','Centro de Liberia','Otro'
 ]
 
+
+SECTORS = ['Sector 1','Sector 2','Sector 3','Sector 4','Sector 5','Sin sector']
+CELL_TYPES = [('adultos','Adultos'),('jovenes','Jóvenes'),('ambos','Adultos y jóvenes')]
+
+def safe_text(value, fallback='Por definir'):
+    raw = '' if value is None else str(value).strip()
+    if not raw or raw.lower() in ['none','null','nan','undefined','por definir']:
+        return fallback
+    return raw
+
+def display_barrio(cell):
+    other = safe_text(getattr(cell, 'barrio_other', None), '')
+    barrio = safe_text(getattr(cell, 'barrio', None), '')
+    return other or barrio or 'Barrio por definir'
+
+def status_label(status):
+    return {'active':'Activa','paused':'Pausada','full':'Llena'}.get(status or '', 'Pausada')
+
+def cell_type_label(value):
+    return {'adultos':'Adultos','jovenes':'Jóvenes','ambos':'Adultos y jóvenes'}.get(value or 'adultos', 'Adultos')
+
+def get_mentor(user):
+    if not user or not getattr(user, 'mentor_id', None):
+        return None
+    return User.query.get(user.mentor_id)
+
+def can_manage_leader(user):
+    if current_user.role == 'admin':
+        return True
+    return current_user.role == 'mentor' and user.role == 'leader' and user.mentor_id == current_user.id
+
+def can_manage_cell(cell):
+    if current_user.role == 'admin':
+        return True
+    return current_user.role == 'mentor' and cell.leader and cell.leader.mentor_id == current_user.id
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -55,6 +91,8 @@ class User(db.Model, UserMixin):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     current_session_token = db.Column(db.String(120), nullable=True)
     last_seen_at = db.Column(db.DateTime, nullable=True)
+    sector = db.Column(db.String(40), nullable=True)
+    mentor_id = db.Column(db.Integer, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -78,6 +116,8 @@ class Cell(db.Model):
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(20), default='active') # active, paused, full
+    cell_type = db.Column(db.String(20), default='adultos') # adultos, jovenes, ambos
+    has_children_teacher = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class LeadRequest(db.Model):
@@ -382,7 +422,7 @@ def validate_cell_form(form):
 
 @app.context_processor
 def inject_globals():
-    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager)
+    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, SECTORS=SECTORS, CELL_TYPES=CELL_TYPES, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager, display_barrio=display_barrio, status_label=status_label, cell_type_label=cell_type_label, get_mentor=get_mentor)
 
 
 @app.before_request
@@ -448,7 +488,7 @@ def api_nearby():
     for c in Cell.query.filter_by(status='active').all():
         if c.latitude is None or c.longitude is None: continue
         km = distance_km(lat, lng, c.latitude, c.longitude)
-        rows.append({'id':c.id,'name':c.name,'barrio':c.barrio_other or c.barrio,'leader':c.leader.name if c.leader else 'Por asignar','day':c.day,'time':c.time,'address':c.address,'phone':c.phone or (c.leader.phone if c.leader else ''),'whatsapp_url':wa_link(c.phone or (c.leader.phone if c.leader else ''), c.name),'maps':c.google_maps_url,'waze':c.waze_url,'description':c.description or 'Célula disponible para integrarte.','distance_km':round(km,2),'distance_label':f'{int(km*1000)} m' if km < 1 else f'{km:.1f} km'})
+        rows.append({'id':c.id,'name':c.name,'barrio':display_barrio(c),'leader':c.leader.name if c.leader else 'Por asignar','day':c.day,'time':c.time,'address':c.address,'phone':c.phone or (c.leader.phone if c.leader else ''),'whatsapp_url':wa_link(c.phone or (c.leader.phone if c.leader else ''), c.name),'maps':c.google_maps_url,'waze':c.waze_url,'description':c.description or 'Célula disponible para integrarte.','distance_km':round(km,2),'distance_label':f'{int(km*1000)} m' if km < 1 else f'{km:.1f} km'})
     rows.sort(key=lambda x:x['distance_km'])
     return jsonify({'ok': True, 'cells': rows[:12]})
 
@@ -508,21 +548,35 @@ def change_password():
 @login_required
 @manager_required
 def admin_dashboard():
-    stats = {'cells':Cell.query.count(),'active':Cell.query.filter_by(status='active').count(),'leaders':User.query.filter_by(role='leader').count(),'requests':LeadRequest.query.count()}
-    recent = Cell.query.order_by(Cell.created_at.desc()).limit(6).all()
+    if current_user.role == 'mentor':
+        leader_ids = [u.id for u in User.query.filter_by(role='leader', mentor_id=current_user.id).all()]
+        cell_query = Cell.query.filter(Cell.leader_id.in_(leader_ids)) if leader_ids else Cell.query.filter(db.text('1=0'))
+        leader_count = len(leader_ids)
+    else:
+        cell_query = Cell.query
+        leader_count = User.query.filter_by(role='leader').count()
+    stats = {'cells':cell_query.count(),'active':cell_query.filter_by(status='active').count(),'leaders':leader_count,'requests':LeadRequest.query.count()}
+    recent = cell_query.order_by(Cell.created_at.desc()).limit(6).all()
     return render_template('admin/dashboard.html', stats=stats, recent=recent)
 
 @app.route('/admin/cells')
 @login_required
 @manager_required
 def admin_cells():
-    return render_template('admin/cells.html', cells=Cell.query.order_by(Cell.created_at.desc()).all())
+    if current_user.role == 'mentor':
+        leader_ids = [u.id for u in User.query.filter_by(role='leader', mentor_id=current_user.id).all()]
+        cells = Cell.query.filter(Cell.leader_id.in_(leader_ids)).order_by(Cell.created_at.desc()).all() if leader_ids else []
+    else:
+        cells = Cell.query.order_by(Cell.created_at.desc()).all()
+    return render_template('admin/cells.html', cells=cells)
 
 @app.route('/admin/cells/new', methods=['GET','POST'])
 @login_required
 @manager_required
 def admin_cell_new():
     leaders = User.query.filter_by(role='leader', active=True).order_by(User.name).all()
+    if current_user.role == 'mentor':
+        leaders = User.query.filter_by(role='leader', active=True, mentor_id=current_user.id).order_by(User.name).all()
     if request.method == 'POST':
         errors = validate_cell_form(request.form)
         if errors:
@@ -537,10 +591,14 @@ def admin_cell_new():
 
 @app.route('/admin/cells/<int:cell_id>/edit', methods=['GET','POST'])
 @login_required
-@admin_required
+@manager_required
 def admin_cell_edit(cell_id):
     c = Cell.query.get_or_404(cell_id)
+    if not can_manage_cell(c):
+        abort(403)
     leaders = User.query.filter_by(role='leader', active=True).order_by(User.name).all()
+    if current_user.role == 'mentor':
+        leaders = User.query.filter_by(role='leader', active=True, mentor_id=current_user.id).order_by(User.name).all()
     if request.method == 'POST':
         errors = validate_cell_form(request.form)
         if errors:
@@ -552,9 +610,10 @@ def admin_cell_edit(cell_id):
 
 def fill_cell(c, form):
     c.name=form.get('name','').strip(); c.leader_id=int(form.get('leader_id')) if form.get('leader_id') else None
-    c.barrio=form.get('barrio','').strip(); c.barrio_other=form.get('barrio_other','').strip() or None
+    c.barrio=safe_text(form.get('barrio',''), '') or 'Otro'; c.barrio_other=safe_text(form.get('barrio_other',''), '') or None
     c.address=form.get('address','').strip(); c.day=form.get('day','').strip(); c.time=form.get('time','').strip()
     c.phone=form.get('phone','').strip(); c.description=form.get('description','').strip(); c.status=form.get('status','active')
+    c.cell_type=form.get('cell_type','adultos') or 'adultos'; c.has_children_teacher = form.get('has_children_teacher') == 'on'
     c.google_maps_url=form.get('google_maps_url','').strip(); c.waze_url=form.get('waze_url','').strip()
     lat = form.get('latitude'); lng=form.get('longitude')
     if (not lat or not lng) and c.google_maps_url:
@@ -581,36 +640,54 @@ def admin_cell_delete(cell_id):
 @manager_required
 def admin_leaders():
     generated = None
+    mentors = User.query.filter_by(role='mentor', active=True).order_by(User.name).all() if current_user.role == 'admin' else []
     if request.method == 'POST':
         name=request.form.get('name','').strip(); username=(request.form.get('username') or '').lower().strip(); email=(request.form.get('email') or '').lower().strip() or None; phone_digits=clean_phone(request.form.get('phone','')); phone=format_cr_phone(phone_digits) if phone_digits else None
         password=request.form.get('password') or random_password()
+        role = request.form.get('role','leader') if current_user.role == 'admin' else 'leader'
+        if role not in ['leader','mentor']:
+            role = 'leader'
+        sector = safe_text(request.form.get('sector'), '') or None
+        mentor_id = None
+        if role == 'leader':
+            if current_user.role == 'mentor':
+                mentor_id = current_user.id
+                sector = current_user.sector or sector
+            else:
+                mentor_id = int(request.form.get('mentor_id')) if request.form.get('mentor_id') else None
         if not name:
             flash('Nombre es obligatorio.', 'danger'); return redirect(url_for('admin_leaders'))
         if phone_digits and len(phone_digits) != 8:
             flash('El teléfono debe tener 8 dígitos. Ejemplo: 8888-8888.', 'danger'); return redirect(url_for('admin_leaders'))
         username = slug_username(username) if username else unique_username(name)
         if User.query.filter_by(username=username).first():
-            flash('Ya existe un líder con ese nombre de usuario.', 'danger'); return redirect(url_for('admin_leaders'))
+            flash('Ya existe un usuario con ese nombre de usuario.', 'danger'); return redirect(url_for('admin_leaders'))
         if email and User.query.filter_by(email=email).first():
             flash('Ya existe un usuario con ese correo.', 'danger'); return redirect(url_for('admin_leaders'))
-        u=User(name=name,username=username,email=email,phone=phone,role='leader',active=True); u.set_password(password); db.session.add(u); db.session.commit()
+        u=User(name=name,username=username,email=email,phone=phone,role=role,active=True,sector=sector,mentor_id=mentor_id); u.set_password(password); db.session.add(u); db.session.commit()
         body = build_credentials_message(u, password)
         credentials_whatsapp_url = wa_message_link(phone, body) if phone else ''
         sent=False; sms_msg=''
         if request.form.get('send_sms') == 'on' and phone:
             sent, sms_msg = send_sms(phone, body); flash(sms_msg, 'success' if sent else 'warning')
         generated={'name':name,'username':username,'email':email,'password':password,'phone':phone,'body':body,'sent':sent,'whatsapp_url':credentials_whatsapp_url}
-        flash('Líder creado correctamente.', 'success')
-    return render_template('admin/leaders.html', leaders=User.query.filter_by(role='leader').order_by(User.created_at.desc()).all(), generated=generated)
+        flash(('Mentor' if role == 'mentor' else 'Líder') + ' creado correctamente.', 'success')
+    if current_user.role == 'mentor':
+        leaders = User.query.filter_by(role='leader', mentor_id=current_user.id).order_by(User.created_at.desc()).all()
+    else:
+        leaders = User.query.filter(User.role.in_(['leader','mentor'])).order_by(User.created_at.desc()).all()
+    return render_template('admin/leaders.html', leaders=leaders, mentors=mentors, generated=generated)
 
 
 
 
 @app.route('/admin/leaders/<int:leader_id>/edit', methods=['GET','POST'])
 @login_required
-@admin_required
+@manager_required
 def admin_leader_edit(leader_id):
     u = User.query.get_or_404(leader_id)
+    if not can_manage_leader(u):
+        abort(403)
     if u.role not in ['leader', 'mentor']:
         abort(403)
     if request.method == 'POST':
@@ -619,7 +696,9 @@ def admin_leader_edit(leader_id):
         email = (request.form.get('email') or '').lower().strip() or None
         phone_digits = clean_phone(request.form.get('phone',''))
         phone = format_cr_phone(phone_digits) if phone_digits else None
-        role = request.form.get('role') or u.role
+        sector = safe_text(request.form.get('sector'), '') or None
+        mentor_id = int(request.form.get('mentor_id')) if request.form.get('mentor_id') and current_user.role == 'admin' and u.role == 'leader' else None
+        role = (request.form.get('role') or u.role) if current_user.role == 'admin' else u.role
         active = request.form.get('active') == 'on'
         password = request.form.get('password') or ''
         if role not in ['leader','mentor']:
@@ -639,7 +718,7 @@ def admin_leader_edit(leader_id):
         if phone_digits and len(phone_digits) != 8:
             flash('El teléfono debe tener 8 dígitos. Ejemplo: 8888-8888.', 'danger')
             return redirect(url_for('admin_leader_edit', leader_id=u.id))
-        u.name = name; u.username = username; u.email = email; u.phone = phone; u.role = role; u.active = active
+        u.name = name; u.username = username; u.email = email; u.phone = phone; u.role = role; u.active = active; u.sector = sector; u.mentor_id = mentor_id if role == 'leader' else None
         if password:
             if len(password) < 8:
                 flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger')
@@ -649,7 +728,8 @@ def admin_leader_edit(leader_id):
         db.session.commit()
         flash('Usuario actualizado correctamente.', 'success')
         return redirect(url_for('admin_leaders'))
-    return render_template('admin/leader_edit.html', leader=u)
+    mentors = User.query.filter_by(role='mentor', active=True).order_by(User.name).all() if current_user.role == 'admin' else []
+    return render_template('admin/leader_edit.html', leader=u, mentors=mentors)
 
 @app.route('/admin/leaders/<int:leader_id>/credentials', methods=['POST'])
 @login_required
@@ -762,20 +842,22 @@ def admin_event_delete(event_id):
 def leader_dashboard():
     c = Cell.query.filter_by(leader_id=current_user.id).first() if current_user.role=='leader' else None
     if current_user.role in ['admin','mentor']: return redirect(url_for('admin_dashboard'))
-    return render_template('leader/dashboard.html', cell=c)
+    mentor = get_mentor(current_user)
+    return render_template('leader/dashboard.html', cell=c, mentor=mentor)
 
 @app.route('/leader/cell/update', methods=['POST'])
 @login_required
 @leader_required
 def leader_cell_update():
     c = Cell.query.filter_by(leader_id=current_user.id).first_or_404()
-    allowed = ['address','day','time','phone','description','google_maps_url','waze_url','latitude','longitude']
+    allowed = ['address','day','time','phone','description','google_maps_url','waze_url','latitude','longitude','cell_type']
     for k in allowed:
         if k in request.form:
             val = request.form.get(k)
             if k in ['latitude','longitude']:
                 setattr(c,k,float(val) if val else None)
             else: setattr(c,k,val.strip())
+    c.has_children_teacher = request.form.get('has_children_teacher') == 'on'
     if c.latitude is not None and c.longitude is not None:
         c.google_maps_url = maps_url(c.latitude,c.longitude); c.waze_url = waze_url(c.latitude,c.longitude)
     db.session.commit(); flash('Información actualizada.', 'success'); return redirect(url_for('leader_dashboard'))
@@ -808,7 +890,7 @@ def api_resolve_maps_url():
 @login_required
 def api_update_location(cell_id):
     c = Cell.query.get_or_404(cell_id)
-    if current_user.role != 'admin' and c.leader_id != current_user.id: abort(403)
+    if not (current_user.role == 'admin' or c.leader_id == current_user.id or can_manage_cell(c)): abort(403)
     data = request.get_json(silent=True) or {}
     try: lat=float(data.get('latitude')); lng=float(data.get('longitude'))
     except Exception: return jsonify({'ok':False,'message':'Ubicación inválida.'}),400
@@ -828,12 +910,27 @@ def upgrade_db():
         if engine_name.startswith('postgresql'):
             conn.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS current_session_token VARCHAR(120)'))
             conn.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP'))
+            conn.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS sector VARCHAR(40)'))
+            conn.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS mentor_id INTEGER'))
+            conn.execute(text("ALTER TABLE cell ADD COLUMN IF NOT EXISTS cell_type VARCHAR(20) DEFAULT 'adultos'"))
+            conn.execute(text('ALTER TABLE cell ADD COLUMN IF NOT EXISTS has_children_teacher BOOLEAN DEFAULT FALSE'))
+            conn.execute(text("UPDATE cell SET cell_type='adultos' WHERE cell_type IS NULL"))
+            conn.execute(text("UPDATE cell SET has_children_teacher=FALSE WHERE has_children_teacher IS NULL"))
         else:
             cols = [r[1] for r in conn.execute(text('PRAGMA table_info(user)')).fetchall()]
             if 'current_session_token' not in cols:
                 conn.execute(text('ALTER TABLE user ADD COLUMN current_session_token VARCHAR(120)'))
             if 'last_seen_at' not in cols:
                 conn.execute(text('ALTER TABLE user ADD COLUMN last_seen_at TIMESTAMP'))
+            if 'sector' not in cols:
+                conn.execute(text('ALTER TABLE user ADD COLUMN sector VARCHAR(40)'))
+            if 'mentor_id' not in cols:
+                conn.execute(text('ALTER TABLE user ADD COLUMN mentor_id INTEGER'))
+            cell_cols = [r[1] for r in conn.execute(text('PRAGMA table_info(cell)')).fetchall()]
+            if 'cell_type' not in cell_cols:
+                conn.execute(text("ALTER TABLE cell ADD COLUMN cell_type VARCHAR(20) DEFAULT 'adultos'"))
+            if 'has_children_teacher' not in cell_cols:
+                conn.execute(text('ALTER TABLE cell ADD COLUMN has_children_teacher BOOLEAN DEFAULT 0'))
     print('Base actualizada.')
 
 @app.cli.command('ensure-admin')

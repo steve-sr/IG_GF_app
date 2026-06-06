@@ -3,7 +3,7 @@
   <div>
     <p class="eyebrow">Admin</p>
     <h1>Líderes</h1>
-    <p>Creá accesos para líderes y compartí credenciales de forma segura.</p>
+    <p>Creá accesos para líderes y mentores, asigná sectores y compartí credenciales de forma segura.</p>
   </div>
   <a class="btn ghost" href="{{ url_for('admin_dashboard') }}"><span class="icon arrow-left"></span>Volver</a>
 </section>
@@ -44,6 +44,19 @@
       <label>Teléfono
         <input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="9" placeholder="Ej. 8888-8888">
       </label>
+      {% if current_user.role == 'admin' %}
+      <label>Tipo de usuario
+        <select name="role"><option value="leader">Líder</option><option value="mentor">Mentor</option></select>
+      </label>
+      {% endif %}
+      <label>Sector
+        <select name="sector"><option value="">Sin sector</option>{% for s in SECTORS %}<option value="{{s}}">{{s}}</option>{% endfor %}</select>
+      </label>
+      {% if current_user.role == 'admin' %}
+      <label>Mentor asignado
+        <select name="mentor_id"><option value="">Sin mentor</option>{% for m in mentors %}<option value="{{m.id}}">{{m.name}}{% if m.sector %} · {{m.sector}}{% endif %}</option>{% endfor %}</select>
+      </label>
+      {% endif %}
       <label>Contraseña (opcional)
         <input name="password" data-label="Contraseña" autocomplete="new-password" placeholder="Ej. H0sanna2026">
       </label>
@@ -61,11 +74,14 @@
 
 <div class="table-card shell leader-shell fade-up delay-2">
   <table class="leaders-table">
-    <tr><th>Nombre</th><th>Usuario</th><th>Célula asignada</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
+    <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Sector</th><th>Mentor</th><th>Célula asignada</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
     {% for l in leaders %}
     <tr>
       <td><b>{{l.name}}</b></td>
       <td><b>{{l.username}}</b></td>
+      <td><span class="mini-pill">{{ 'Mentor' if l.role == 'mentor' else 'Líder' }}</span></td>
+      <td>{{ l.sector or 'Sin sector' }}</td>
+      <td>{% set mentor = get_mentor(l) %}{{ mentor.name if mentor else 'Sin mentor' }}</td>
       <td class="assigned-cells">
         {% if l.cells %}
           {% for cell in l.cells %}
@@ -79,15 +95,17 @@
       <td>{{l.phone or '—'}}</td>
       <td><span class="distance-badge"><span class="status-dot"></span>{{'Activo' if l.active else 'Inactivo'}}</span></td>
       <td>
-        {% if current_user.role == 'admin' %}
+        {% if current_user.role == 'admin' or (current_user.role == 'mentor' and l.mentor_id == current_user.id) %}
         <div class="row-actions">
           <a class="btn small ghost" href="{{ url_for('admin_leader_edit', leader_id=l.id) }}"><span class="icon edit"></span>Editar</a>
+          {% if current_user.role == 'admin' and l.role == 'leader' %}
           <form method="post" action="{{ url_for('admin_leader_credentials', leader_id=l.id) }}" data-confirm="Generar nuevas credenciales" data-confirm-message="Se generará una nueva contraseña para {{ l.name }}. La contraseña anterior dejará de funcionar.">
             <button class="btn small ghost" type="submit"><span class="icon key"></span>Credenciales</button>
           </form>
           <form method="post" action="{{ url_for('admin_leader_delete', leader_id=l.id) }}" data-confirm="Eliminar líder" data-confirm-message="Se eliminará el líder {{ l.name }}. Las células asignadas quedarán sin líder.">
             <button class="btn small danger" type="submit"><span class="icon trash"></span>Eliminar</button>
           </form>
+          {% endif %}
         </div>
         {% else %}
         <span class="muted">Solo lectura</span>
@@ -95,7 +113,7 @@
       </td>
     </tr>
     {% else %}
-    <tr><td colspan="7"><div class="empty">No hay líderes registrados.</div></td></tr>
+    <tr><td colspan="10"><div class="empty">No hay líderes registrados.</div></td></tr>
     {% endfor %}
   </table>
 </div>

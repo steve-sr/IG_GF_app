@@ -8,13 +8,15 @@
 </section>
 <div class="table-card shell fade-up delay-1">
   <table>
-    <tr><th>Nombre</th><th>Barrio</th><th>Día</th><th>Líder</th><th>Ubicación</th><th>Acciones</th></tr>
+    <tr><th>Nombre</th><th>Barrio</th><th>Tipo</th><th>Día</th><th>Líder</th><th>Estado</th><th>Ubicación</th><th>Acciones</th></tr>
     {% for c in cells %}
     <tr>
       <td><b>{{c.name}}</b></td>
-      <td>{{c.barrio_other or c.barrio}}</td>
+      <td>{{ display_barrio(c) }}</td>
+      <td><span class="mini-pill">{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span class="mini-pill soft-green">Niños</span>{% endif %}</td>
       <td>{{c.day}} · {{c.time}}</td>
       <td>{{c.leader.name if c.leader else '—'}}</td>
+      <td><span class="status-chip {{ c.status }}">{{ status_label(c.status) }}</span></td>
       <td>{% if c.latitude %}<span class="distance-badge"><span class="icon location"></span>Lista</span>{% else %}<span class="pill">Pendiente</span>{% endif %}</td>
       <td>
         {% if current_user.role == 'admin' %}
@@ -27,7 +29,7 @@
         {% endif %}
       </td>
     </tr>
-    {% else %}<tr><td colspan="6"><div class="empty">No hay células creadas.</div></td></tr>{% endfor %}
+    {% else %}<tr><td colspan="8"><div class="empty">No hay células creadas.</div></td></tr>{% endfor %}
   </table>
 </div>
 {% endblock %}

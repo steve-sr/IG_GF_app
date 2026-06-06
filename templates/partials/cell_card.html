@@ -2,9 +2,9 @@
   <div class="card-top">
     <div class="cell-main">
       <h3>{{ c.name }}</h3>
-      <p class="cell-barrio">{{ c.barrio_other or c.barrio or 'Barrio por definir' }}</p>
+      <p class="cell-barrio">{{ display_barrio(c) }}</p>
     </div>
-    <span class="pill status-pill"><span class="status-dot"></span>{{ c.day }} · {{ c.time }}</span>
+    <span class="pill status-pill"><span class="status-dot"></span>{{ status_label(c.status) }} · {{ c.day }} {{ c.time }}</span>
   </div>
 
   {% if c.distance_label is defined %}
@@ -12,6 +12,7 @@
   {% endif %}
 
   <p class="cell-description">{{ c.description or 'Célula disponible para integrarte.' }}</p>
+  <div class="card-tags"><span>{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span>Maestra de niños</span>{% endif %}</div>
 
   <div class="meta cell-meta">
     <span><i class="icon user"></i>{{ c.leader.name if c.leader else 'Líder por asignar' }}</span>

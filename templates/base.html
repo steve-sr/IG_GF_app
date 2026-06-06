@@ -28,7 +28,8 @@
       <img src="{{ url_for('static', filename='img/hosanna-logo.png') }}" onerror="this.style.display='none'" alt="Iglesia Hosanna">
       <span>Iglesia Hosanna</span>
     </a>
-    <div class="nav-actions">
+    <button class="nav-toggle" type="button" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-actions" id="mainNavMenu">
       <a href="{{ url_for('public_home') }}">Inicio</a>
       <a href="{{ url_for('public_cells') }}">Buscar célula</a>
       <a href="{{ url_for('gratitude') }}">Gratitud</a>
