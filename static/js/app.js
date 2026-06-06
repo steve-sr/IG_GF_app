@@ -207,3 +207,23 @@ document.addEventListener('click', (e)=>{
   boxes.forEach(b=>{ b.checked = shouldCheck; });
   btn.textContent = shouldCheck ? 'Quitar selección' : 'Seleccionar visibles';
 });
+
+
+// Visual selection feedback for mentor assignment cards.
+document.addEventListener('change', (e)=>{
+  const box = e.target.closest('.leader-select-card input[type="checkbox"]');
+  if(!box) return;
+  box.closest('.leader-select-card')?.classList.toggle('is-selected', box.checked);
+});
+document.querySelectorAll('.leader-select-card input[type="checkbox"]').forEach(box=>{
+  box.closest('.leader-select-card')?.classList.toggle('is-selected', box.checked);
+});
+
+// Smoothly reveal page sections.
+const revealObserver = 'IntersectionObserver' in window ? new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{ if(entry.isIntersecting){ entry.target.classList.add('is-visible'); revealObserver.unobserve(entry.target); } });
+},{threshold:.08}) : null;
+document.querySelectorAll('.panel,.sector-group,.mentor-mini-card,.cell-card,.table-card').forEach(el=>{
+  el.classList.add('ui-reveal');
+  if(revealObserver) revealObserver.observe(el); else el.classList.add('is-visible');
+});
