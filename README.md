@@ -1,41 +1,59 @@
-# IG_GF_app
+# IG_GF_app — Plataforma Hosanna
 
-Sistema para búsqueda y gestión de células de Iglesia Hosanna.
+Rutas principales:
 
-## Instalar local
+- `/` landing informativa de Hosanna.
+- `/celulas` buscador público de células/grupos familiares.
+- `/login` acceso admin, mentor y líderes.
+- `/admin` panel administrativo.
+- `/leader` panel del líder.
+
+## Local
 
 ```bash
-cd IG_GF_app
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 flask init-db
-flask seed
+flask ensure-admin
 flask run
 ```
 
-Abrir: http://127.0.0.1:5000
+## Render
 
-Admin inicial:
-- admin
-- admin123
+Start Command recomendado:
 
-## Twilio SMS opcional
-
-Crear archivo `.env` basado en `.env.example` y poner:
-
-```env
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_FROM_NUMBER=
+```bash
+flask upgrade-db && flask migrate-usernames && flask ensure-admin && gunicorn app:app
 ```
 
-## Variables importantes en Render
-
-Configura la URL pública para mensajes y credenciales:
+Variables mínimas:
 
 ```env
-APP_BASE_URL=https://celulas.hosannaigle.com
+SECRET_KEY=...
+DATABASE_URL=...
+APP_BASE_URL=https://hosannaigle.com
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=H0sann4!!!
+ADMIN_NAME=Administrador Hosanna
+SESSION_TIMEOUT_MINUTES=10
 ```
 
-El botón de WhatsApp para compartir credenciales usa esta URL y el teléfono del líder.
+Para crear mentor:
+
+```env
+MENTOR_USERNAME=mentor
+MENTOR_PASSWORD=H0sann4Mentor!!!
+MENTOR_NAME=Mentor Hosanna
+```
+
+## Dominio
+
+En Render agregar custom domain:
+
+```text
+hosannaigle.com
+www.hosannaigle.com
+```
+
+En DNS, usar los registros indicados por Render. Para dominio raíz, Render permite ANAME/ALIAS hacia el subdominio `.onrender.com`; si el proveedor no soporta eso, usar A record `216.24.57.1`.

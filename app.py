@@ -19,7 +19,7 @@ if db_url.startswith('postgres://'):
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-APP_PUBLIC_URL = os.getenv('APP_BASE_URL') or os.getenv('APP_PUBLIC_URL') or 'https://celulas.hosannaigle.com'
+APP_PUBLIC_URL = os.getenv('APP_BASE_URL') or os.getenv('APP_PUBLIC_URL') or 'https://hosannaigle.com'
 APP_PUBLIC_URL = APP_PUBLIC_URL.rstrip('/')
 
 db = SQLAlchemy(app)
@@ -281,9 +281,56 @@ def validate_cell_form(form):
     if form.get('day') and form.get('day') not in DAYS: errors.append('Seleccioná un día válido.')
     return errors
 
+
+def env_value(key, default=''):
+    return (os.getenv(key, default) or default).strip()
+
+def landing_events():
+    return [
+        {
+            'date': env_value('EVENT_1_DATE', 'Próximamente'),
+            'title': env_value('EVENT_1_TITLE', 'Encuentro de familia'),
+            'time': env_value('EVENT_1_TIME', 'Hora por confirmar'),
+            'image': env_value('EVENT_1_IMAGE', ''),
+        },
+        {
+            'date': env_value('EVENT_2_DATE', 'Domingo'),
+            'title': env_value('EVENT_2_TITLE', 'Servicio de celebración'),
+            'time': env_value('EVENT_2_TIME', '10:00 a. m.'),
+            'image': env_value('EVENT_2_IMAGE', ''),
+        },
+        {
+            'date': env_value('EVENT_3_DATE', 'Miércoles'),
+            'title': env_value('EVENT_3_TITLE', 'Noche de oración'),
+            'time': env_value('EVENT_3_TIME', '7:00 p. m.'),
+            'image': env_value('EVENT_3_IMAGE', ''),
+        },
+    ]
+
+def church_info():
+    return {
+        'name': env_value('CHURCH_NAME', 'Iglesia Hosanna'),
+        'headline': env_value('HOME_HEADLINE', 'Un lugar para acercarte a Dios y caminar en familia.'),
+        'subtitle': env_value('HOME_SUBTITLE', 'Conectate con nuestros servicios, eventos y grupos familiares desde una sola plataforma.'),
+        'cover_image': env_value('HOME_COVER_IMAGE', ''),
+        'address': env_value('CHURCH_ADDRESS', 'Liberia, Guanacaste, Costa Rica'),
+        'maps_url': env_value('CHURCH_MAPS_URL', 'https://www.google.com/maps/search/?api=1&query=Iglesia%20Hosanna%20Liberia%20Guanacaste'),
+        'instagram': env_value('IG_URL', 'https://www.instagram.com/'),
+        'facebook': env_value('FB_URL', 'https://www.facebook.com/'),
+        'youtube': env_value('YT_URL', 'https://www.youtube.com/'),
+        'whatsapp': env_value('WA_URL', ''),
+    }
+
+def service_schedule():
+    return [
+        {'day': env_value('SERVICE_1_DAY', 'Domingo'), 'title': env_value('SERVICE_1_TITLE', 'Servicio general'), 'time': env_value('SERVICE_1_TIME', '10:00 a. m.')},
+        {'day': env_value('SERVICE_2_DAY', 'Miércoles'), 'title': env_value('SERVICE_2_TITLE', 'Oración y enseñanza'), 'time': env_value('SERVICE_2_TIME', '7:00 p. m.')},
+        {'day': env_value('SERVICE_3_DAY', 'Sábado'), 'title': env_value('SERVICE_3_TITLE', 'Reunión de jóvenes'), 'time': env_value('SERVICE_3_TIME', '6:00 p. m.')},
+    ]
+
 @app.context_processor
 def inject_globals():
-    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager)
+    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager, church=church_info())
 
 
 @app.before_request
@@ -318,6 +365,18 @@ def enforce_session_security():
     db.session.commit()
 
 @app.route('/')
+def landing_home():
+    return render_template('landing_home.html', info=church_info(), events=landing_events(), schedules=service_schedule())
+
+@app.route('/celula')
+def public_home_single():
+    return redirect(url_for('public_home'))
+
+@app.route('/grupos')
+def public_home_groups():
+    return redirect(url_for('public_home'))
+
+@app.route('/celulas')
 def public_home():
     q = (request.args.get('q') or '').strip()
     cells = Cell.query.filter_by(status='active')
