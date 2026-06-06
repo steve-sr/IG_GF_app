@@ -334,6 +334,11 @@ def public_home():
     events = ChurchEvent.query.filter_by(active=True).order_by(ChurchEvent.created_at.desc()).limit(6).all()
     return render_template('home.html', events=events)
 
+
+@app.route('/gratitud')
+def gratitude():
+    return render_template('gratitude.html')
+
 @app.route('/celulas')
 def public_cells():
     q = (request.args.get('q') or '').strip()

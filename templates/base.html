@@ -28,6 +28,7 @@
     <div class="nav-actions">
       <a href="{{ url_for('public_home') }}">Inicio</a>
       <a href="{{ url_for('public_cells') }}">Buscar célula</a>
+      <a href="{{ url_for('gratitude') }}">Gratitud</a>
       {% if current_user.is_authenticated %}
         {% if current_user.role in ['admin','mentor'] %}
           <a href="{{ url_for('admin_dashboard') }}">{{ 'Admin' if current_user.role == 'admin' else 'Mentor' }}</a>
