@@ -53,7 +53,7 @@
             <td><b>{{c.name}}</b><div class="mobile-sub">{{ display_barrio(c) }}</div></td>
             <td>{{ display_barrio(c) }}</td>
             <td><span class="mini-pill">{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span class="mini-pill soft-green">Niños</span>{% endif %}</td>
-            <td>{{c.day}} · {{c.time}}</td>
+            <td>{{ c.day }} · {{ fmt_time(c.time) }}</td>
             <td>{{c.leader.name if c.leader else '—'}}</td>
             <td><span class="status-chip {{ c.status }}">{{ status_label(c.status) }}</span></td>
             <td>{% if c.latitude %}<span class="distance-badge"><span class="icon location"></span>Lista</span>{% else %}<span class="pill">Pendiente</span>{% endif %}</td>

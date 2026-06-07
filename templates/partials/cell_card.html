@@ -1,7 +1,7 @@
 <article class="card cell-card">
   <div class="card-top">
     <div class="cell-main"><h3>{{ c.name }}</h3><p class="cell-barrio">{{ display_barrio(c) }}</p></div>
-    <span class="pill status-pill"><span class="status-dot"></span>{{ status_label(c.status) }} · {{ c.day }} {{ c.time }}</span>
+    <span class="pill status-pill"><span class="status-dot"></span>{{ status_label(c.status) }} · {{ c.day }} {{ fmt_time(c.time) }}</span>
   </div>
   {% if c.distance_label is defined %}<p class="distance-line"><span class="icon location"></span>{{ c.distance_label }} de tu ubicación</p>{% endif %}
   <div class="card-tags"><span>{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span>Maestra de niños</span>{% endif %}{% if c.leader and c.leader.sector %}<span>{{ c.leader.sector }}</span>{% endif %}</div>

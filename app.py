@@ -34,7 +34,24 @@ login_manager.login_message = 'Iniciá sesión para continuar.'
 SESSION_TIMEOUT_MINUTES = int(os.getenv('SESSION_TIMEOUT_MINUTES', '10'))
 
 DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
-HOURS = [f'{h:02d}:{m:02d}' for h in range(5, 23) for m in (0, 30)]
+def format_time_12(value):
+    raw = str(value or '').strip()
+    if not raw or raw.lower() in ('none', 'por definir', 'sin definir'):
+        return 'Por definir'
+    upper = raw.upper().replace('.', '')
+    if 'AM' in upper or 'PM' in upper:
+        return raw.replace('am','AM').replace('pm','PM')
+    try:
+        parts = raw.split(':')
+        hour = int(parts[0])
+        minute = int(parts[1]) if len(parts) > 1 else 0
+        suffix = 'AM' if hour < 12 else 'PM'
+        h12 = hour % 12 or 12
+        return f'{h12}:{minute:02d} {suffix}'
+    except Exception:
+        return raw
+
+HOURS = [format_time_12(f'{h:02d}:{m:02d}') for h in range(5, 23) for m in (0, 30)]
 BARRIOS_LIBERIA = [
     'Nazareth','Condega','Moracia','San Roque','Barrio Los Ángeles','Corazón de Jesús','Curime',
     'La Victoria','El Capulín','Buenos Aires','El Jícaro','Pueblo Nuevo','Llano La Cruz','25 de Julio',
@@ -443,7 +460,7 @@ def validate_cell_form(form):
 
 @app.context_processor
 def inject_globals():
-    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, SECTORS=SECTORS, CELL_TYPES=CELL_TYPES, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager, display_barrio=display_barrio, status_label=status_label, cell_type_label=cell_type_label, get_mentor=get_mentor, cell_sector_label=cell_sector_label, user_sector_label=user_sector_label)
+    return dict(DAYS=DAYS, HOURS=HOURS, BARRIOS_LIBERIA=BARRIOS_LIBERIA, SECTORS=SECTORS, CELL_TYPES=CELL_TYPES, APP_PUBLIC_URL=APP_PUBLIC_URL, wa_link=wa_link, is_admin=is_admin, is_manager=is_manager, display_barrio=display_barrio, status_label=status_label, fmt_time=format_time_12, cell_type_label=cell_type_label, get_mentor=get_mentor, cell_sector_label=cell_sector_label, user_sector_label=user_sector_label)
 
 
 @app.before_request
@@ -509,7 +526,7 @@ def api_nearby():
     for c in Cell.query.filter_by(status='active').all():
         if c.latitude is None or c.longitude is None: continue
         km = distance_km(lat, lng, c.latitude, c.longitude)
-        rows.append({'id':c.id,'name':c.name,'barrio':display_barrio(c),'leader':c.leader.name if c.leader else 'Por asignar','day':c.day,'time':c.time,'address':c.address,'phone':c.phone or (c.leader.phone if c.leader else ''),'whatsapp_url':wa_link(c.phone or (c.leader.phone if c.leader else ''), c.name),'maps':c.google_maps_url,'waze':c.waze_url,'description':c.description or 'Célula disponible para integrarte.','distance_km':round(km,2),'distance_label':f'{int(km*1000)} m' if km < 1 else f'{km:.1f} km'})
+        rows.append({'id':c.id,'name':c.name,'barrio':display_barrio(c),'leader':c.leader.name if c.leader else 'Por asignar','day':c.day,'time':format_time_12(c.time),'address':c.address,'phone':c.phone or (c.leader.phone if c.leader else ''),'whatsapp_url':wa_link(c.phone or (c.leader.phone if c.leader else ''), c.name),'maps':c.google_maps_url,'waze':c.waze_url,'description':c.description or 'Célula disponible para integrarte.','distance_km':round(km,2),'distance_label':f'{int(km*1000)} m' if km < 1 else f'{km:.1f} km'})
     rows.sort(key=lambda x:x['distance_km'])
     return jsonify({'ok': True, 'cells': rows[:12]})
 
@@ -601,7 +618,7 @@ def admin_cells():
         if q:
             haystack = ' '.join([
                 safe_text(c.name, ''), safe_text(display_barrio(c), ''), safe_text(c.address, ''),
-                safe_text(c.day, ''), safe_text(c.time, ''), safe_text(c.status, ''),
+                safe_text(c.day, ''), format_time_12(c.time), safe_text(c.status, ''),
                 safe_text(c.leader.name if c.leader else '', ''), safe_text(cell_sector_label(c), '')
             ]).lower()
             if q not in haystack:
@@ -623,7 +640,7 @@ def admin_cells():
             'leader': safe_text(c.leader.name if c.leader else '', '').lower(),
             'status': safe_text(c.status, '').lower(),
             'type': safe_text(c.cell_type, '').lower(),
-            'day': f'{safe_text(c.day, '')} {safe_text(c.time, '')}',
+            'day': f'{safe_text(c.day, '')} {format_time_12(c.time)}',
             'sector': cell_sector_label(c),
         }
         return keys.get(sort, keys['sector'])
@@ -1385,7 +1402,7 @@ def import_mentor_sectors():
                 barrio_other=barrio_other,
                 address=address or 'Por definir',
                 day=day or 'Por definir',
-                time='19:00',
+                time='7:00 PM',
                 phone=None,
                 description=None,
                 status=status or 'paused',
@@ -1404,7 +1421,7 @@ def import_mentor_sectors():
             if day:
                 cell.day = day
             if not cell.time or str(cell.time).lower() in ['none', 'por definir']:
-                cell.time = '19:00'
+                cell.time = '7:00 PM'
             cell.phone = None
             cell.description = None
             if status:
