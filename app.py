@@ -1159,6 +1159,25 @@ def leader_dashboard():
     mentor = get_mentor(current_user)
     return render_template('leader/dashboard.html', cell=(cells[0] if cells else None), cells=cells, mentor=mentor)
 
+
+@app.route('/leader/phone/update', methods=['POST'])
+@login_required
+@leader_required
+def leader_phone_update():
+    if current_user.role != 'leader':
+        abort(403)
+    phone_digits = normalize_cr_digits(request.form.get('phone', ''))
+    if not phone_digits:
+        flash('El teléfono no puede quedar vacío.', 'danger')
+        return redirect(url_for('leader_dashboard'))
+    if len(phone_digits) != 8:
+        flash('El teléfono debe tener 8 dígitos de Costa Rica.', 'danger')
+        return redirect(url_for('leader_dashboard'))
+    current_user.phone = format_cr_phone(phone_digits)
+    db.session.commit()
+    flash('Tu teléfono fue actualizado correctamente.', 'success')
+    return redirect(url_for('leader_dashboard'))
+
 @app.route('/leader/cell/update', methods=['POST'])
 @login_required
 @leader_required

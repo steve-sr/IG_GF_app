@@ -342,3 +342,35 @@ document.querySelectorAll('.panel,.sector-group,.mentor-mini-card,.cell-card,.ta
     close();
   });
 })();
+
+// Leader dashboard: inline cell name editing from pencil icon.
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.leader-edit-name');
+  if(!btn) return;
+  const card = btn.closest('[data-cell-card]');
+  const box = card?.querySelector('.inline-name-edit');
+  const input = card?.querySelector('.cell-name-input');
+  if(!box || !input) return;
+  box.classList.toggle('is-hidden');
+  if(!box.classList.contains('is-hidden')){
+    setTimeout(()=>{ input.focus(); input.select(); }, 80);
+  }
+});
+
+document.addEventListener('input', (e)=>{
+  const input = e.target.closest('.cell-name-input');
+  if(!input) return;
+  const card = input.closest('[data-cell-card]');
+  const title = card?.querySelector('[data-cell-title]');
+  if(title) title.textContent = input.value.trim() || 'Nombre de célula';
+});
+
+// CR phone formatting for leader/account phone fields
+document.querySelectorAll('[data-phone-format]').forEach((input)=>{
+  input.addEventListener('input',()=>{
+    let d=(input.value||'').replace(/\D/g,'');
+    if(d.startsWith('506')) d=d.slice(3);
+    d=d.slice(0,8);
+    input.value=d.length>4?`${d.slice(0,4)}-${d.slice(4)}`:d;
+  });
+});
