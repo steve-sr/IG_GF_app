@@ -1,1 +1,26 @@
-{% extends 'base.html' %}{% block content %}<section class="error-card fade-up"><div class="error-code">{{code}}</div><h1>{{title}}</h1><p>{{message}}</p><div class="actions"><a href="{{ url_for('public_home') }}" class="btn primary">Volver al inicio</a><button type="button" class="btn ghost" onclick="history.back()">Volver atrás</button></div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ code }} · {{ title }}{% endblock %}
+{% block content %}
+<section class="error-shell fade-up">
+  <div class="error-panel">
+    <div class="error-mark">
+      <img src="{{ url_for('static', filename='img/hosanna-logo.png') }}" alt="Iglesia Hosanna" onerror="this.style.display='none'">
+    </div>
+
+    <p class="eyebrow">Iglesia Hosanna</p>
+    <div class="error-code">{{ code }}</div>
+    <h1>{{ title }}</h1>
+    <p class="error-message">{{ message }}</p>
+
+    <div class="error-actions">
+      <a href="{{ back_url or url_for('public_home') }}" class="btn primary">Ir a un lugar seguro</a>
+      <button type="button" class="btn ghost" onclick="history.length > 1 ? history.back() : window.location.href='{{ url_for('public_home') }}'">Volver atrás</button>
+    </div>
+
+    <div class="error-help">
+      <span class="soft-dot"></span>
+      <span>Si el problema continúa, avisá al administrador con una captura de esta pantalla.</span>
+    </div>
+  </div>
+</section>
+{% endblock %}

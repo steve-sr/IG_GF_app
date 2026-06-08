@@ -9,6 +9,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.exceptions import HTTPException
 
 load_dotenv()
 
@@ -1580,12 +1581,57 @@ def migrate_usernames():
 # Importación masiva removida después de ejecutar la carga inicial en producción.
 # Los datos importados permanecen en PostgreSQL.
 
-@app.errorhandler(403)
-def e403(e): return render_template('errors/error.html', code=403, title='Acceso restringido', message='No tenés permiso para entrar a esta sección.'),403
-@app.errorhandler(404)
-def e404(e): return render_template('errors/error.html', code=404, title='Página no encontrada', message='La ruta que intentaste abrir no existe.'),404
-@app.errorhandler(500)
-def e500(e): return render_template('errors/error.html', code=500, title='Algo falló', message='El sistema tuvo un error inesperado.'),500
+ERROR_COPY = {
+    400: ('Solicitud inválida', 'Revisá la información e intentá nuevamente.'),
+    401: ('Sesión requerida', 'Iniciá sesión para continuar con esta acción.'),
+    403: ('Acceso restringido', 'No tenés permiso para entrar a esta sección.'),
+    404: ('Página no encontrada', 'La ruta que intentaste abrir no existe o fue movida.'),
+    405: ('Acción no permitida', 'Esta acción no está disponible desde esta pantalla.'),
+    408: ('Tiempo agotado', 'La solicitud tardó demasiado. Intentá de nuevo.'),
+    429: ('Demasiados intentos', 'Esperá un momento e intentá nuevamente.'),
+    500: ('Algo falló', 'El sistema tuvo un error inesperado. Ya podés volver a una sección segura.'),
+    502: ('Servicio no disponible', 'El servicio tuvo una interrupción temporal.'),
+    503: ('Mantenimiento temporal', 'El sistema no está disponible por el momento. Intentá de nuevo en unos minutos.'),
+}
+
+def _error_wants_json():
+    return request.path.startswith('/api/') or request.accept_mimetypes.best == 'application/json'
+
+def _safe_back_url():
+    if current_user.is_authenticated:
+        if current_user.role in ['admin', 'mentor']:
+            return url_for('admin_dashboard')
+        return url_for('leader_dashboard')
+    return url_for('public_home')
+
+@app.errorhandler(HTTPException)
+def handle_http_error(e):
+    code = e.code or 500
+    title, message = ERROR_COPY.get(code, (e.name or 'Error', 'No pudimos completar la solicitud.'))
+    if _error_wants_json():
+        return jsonify({'ok': False, 'code': code, 'title': title, 'message': message}), code
+    return render_template(
+        'errors/error.html',
+        code=code,
+        title=title,
+        message=message,
+        back_url=_safe_back_url(),
+    ), code
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    app.logger.exception('Unhandled application error: %s', e)
+    code = 500
+    title, message = ERROR_COPY[500]
+    if _error_wants_json():
+        return jsonify({'ok': False, 'code': code, 'title': title, 'message': message}), code
+    return render_template(
+        'errors/error.html',
+        code=code,
+        title=title,
+        message=message,
+        back_url=_safe_back_url(),
+    ), code
 
 if __name__ == '__main__': app.run(debug=True)
 
