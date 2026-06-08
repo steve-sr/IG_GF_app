@@ -40,7 +40,12 @@
           <span class="icon edit"></span>
         </button>
       </div>
-      <p>{{ display_barrio(cell) }} · {{ cell.day }} {{ fmt_time(cell.time) }}</p>
+      <div class="cell-subtitle-edit-row">
+        <p data-cell-barrio>{{ display_barrio(cell) }} · {{ cell.day }} {{ fmt_time(cell.time) }}</p>
+        <button class="icon-button soft leader-edit-barrio" type="button" aria-label="Editar barrio de la célula" title="Editar barrio">
+          <span class="icon edit"></span>
+        </button>
+      </div>
       {% if not cell.latitude %}<p class="warning-text">Esta célula aún no tiene ubicación exacta.</p>{% else %}<p><span class="distance-badge"><span class="icon location"></span>Ubicación configurada</span></p>{% endif %}
     </div>
     <div class="location-actions leader-hero-actions">
@@ -54,6 +59,21 @@
         <input class="cell-name-input" name="name" value="{{cell.name}}" required data-label="Nombre de la célula" placeholder="Ej. Célula | Moracia">
       </label>
       <span class="hint">Este nombre será visible en la búsqueda pública.</span>
+    </div>
+    <div class="inline-barrio-edit is-hidden">
+      <div class="grid two">
+        <label>Barrio
+          <select class="leader-barrio-select" name="barrio" data-current-barrio="{{ cell.barrio or '' }}">
+            {% for barrio in BARRIOS_LIBERIA %}
+              <option value="{{ barrio }}" {% if (cell.barrio == barrio and not cell.barrio_other) or (cell.barrio_other and barrio == 'Otro') %}selected{% endif %}>{{ barrio }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="leader-barrio-other-wrap {% if not cell.barrio_other and cell.barrio != 'Otro' %}is-hidden{% endif %}">Barrio personalizado
+          <input class="leader-barrio-other" name="barrio_other" value="{{ cell.barrio_other or '' }}" placeholder="Ej. Residencial Río">
+        </label>
+      </div>
+      <span class="hint">Usá “Otro” si el barrio no aparece en la lista. Este barrio se mostrará en la búsqueda pública.</span>
     </div>
     <div class="form-section"><div><h3>Horario y detalles</h3><p>Estos datos ayudan a ubicar mejor la célula.</p></div><div class="grid two"><label>Día<select name="day">{% for d in DAYS %}<option value="{{d}}" {% if cell.day==d %}selected{% endif %}>{{d}}</option>{% endfor %}</select></label><label>Hora<select name="time">{% for h in HOURS %}<option value="{{h}}" {% if cell.time==h or fmt_time(cell.time)==h %}selected{% endif %}>{{h}}</option>{% endfor %}</select></label><label>Tipo de célula<select name="cell_type">{% for value,label in CELL_TYPES %}<option value="{{value}}" {% if cell.cell_type==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label><label class="check-card"><input type="checkbox" name="has_children_teacher" {% if cell.has_children_teacher %}checked{% endif %}><span>Cuenta con maestra de niños</span></label></div></div>
     <div class="form-section"><div><h3>Ubicación</h3><p>Podés usar tu ubicación actual o pegar un link de Google Maps.</p></div><label>Dirección<textarea name="address" required data-label="Dirección">{{cell.address}}</textarea></label><div class="grid two"><label>Google Maps<div class="input-action maps-action-row"><input class="mapsInput" name="google_maps_url" value="{{cell.google_maps_url or ''}}" placeholder="Pegá el link de Google Maps"><button type="button" class="btn mini soft leader-resolve-maps" title="Extraer ubicación del link"><span class="icon location"></span>Localizar</button></div><span class="hint">Pegá el link que te compartan por WhatsApp y presioná Localizar.</span></label><label>Waze<input class="wazeInput" name="waze_url" value="{{cell.waze_url or ''}}" readonly></label><label>Latitud<input class="latInput" name="latitude" value="{{cell.latitude or ''}}" readonly></label><label>Longitud<input class="lngInput" name="longitude" value="{{cell.longitude or ''}}" readonly></label></div></div>

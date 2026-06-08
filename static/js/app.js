@@ -365,6 +365,34 @@ document.addEventListener('input', (e)=>{
   if(title) title.textContent = input.value.trim() || 'Nombre de célula';
 });
 
+
+// Leader dashboard: inline barrio editing from pencil icon.
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.leader-edit-barrio');
+  if(!btn) return;
+  const card = btn.closest('[data-cell-card]');
+  const box = card?.querySelector('.inline-barrio-edit');
+  const select = card?.querySelector('.leader-barrio-select');
+  if(!box || !select) return;
+  box.classList.toggle('is-hidden');
+  if(!box.classList.contains('is-hidden')){
+    setTimeout(()=>select.focus(), 80);
+  }
+});
+
+function syncLeaderBarrioOther(select){
+  const card = select.closest('[data-cell-card]');
+  const wrap = card?.querySelector('.leader-barrio-other-wrap');
+  if(!wrap) return;
+  wrap.classList.toggle('is-hidden', select.value !== 'Otro');
+}
+document.addEventListener('change', (e)=>{
+  const select = e.target.closest('.leader-barrio-select');
+  if(!select) return;
+  syncLeaderBarrioOther(select);
+});
+document.querySelectorAll('.leader-barrio-select').forEach(syncLeaderBarrioOther);
+
 // CR phone formatting for leader/account phone fields
 document.querySelectorAll('[data-phone-format]').forEach((input)=>{
   input.addEventListener('input',()=>{

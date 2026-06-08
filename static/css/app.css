@@ -812,3 +812,10 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
   .error-actions .btn{width:100%;justify-content:center;}
   .error-help{border-radius:22px;text-align:left;align-items:flex-start;}
 }
+
+
+.cell-subtitle-edit-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;}
+.cell-subtitle-edit-row p{margin:0;color:var(--muted);font-weight:700;}
+.inline-barrio-edit{margin:18px 0 0;padding:18px;border:1px solid #d9ebff;border-radius:22px;background:linear-gradient(180deg,#f8fbff,#fff);animation:softDrop .22s ease both;}
+.inline-barrio-edit.is-hidden,.leader-barrio-other-wrap.is-hidden{display:none;}
+.inline-barrio-edit .hint{display:block;margin-top:10px;}

@@ -1196,7 +1196,7 @@ def leader_cell_update():
             return redirect(url_for('leader_dashboard'))
         c.name = name
 
-    allowed = ['address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type']
+    allowed = ['address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type','barrio','barrio_other']
     for k in allowed:
         if k in request.form:
             val = request.form.get(k)
@@ -1204,6 +1204,16 @@ def leader_cell_update():
                 setattr(c,k,float(val) if val else None)
             else:
                 setattr(c,k,val.strip())
+    if 'barrio' in request.form:
+        barrio = safe_text(request.form.get('barrio'), '').strip()
+        barrio_other = safe_text(request.form.get('barrio_other'), '').strip()
+        if barrio == 'Otro':
+            c.barrio = 'Otro'
+            c.barrio_other = barrio_other or None
+        elif barrio:
+            c.barrio = barrio
+            c.barrio_other = None
+
     c.has_children_teacher = request.form.get('has_children_teacher') == 'on'
     if c.latitude is not None and c.longitude is not None:
         c.google_maps_url = maps_url(c.latitude,c.longitude)
