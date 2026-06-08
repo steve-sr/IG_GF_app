@@ -88,7 +88,7 @@ def display_barrio(cell):
     return other or barrio or 'Barrio por definir'
 
 def status_label(status):
-    return {'active':'Activa','paused':'Pausada','full':'Llena'}.get(status or '', 'Pausada')
+    return 'Activa' if status == 'active' else 'Pausada'
 
 def cell_type_label(value):
     return {'adultos':'Adultos','jovenes':'Jóvenes','ambos':'Adultos y jóvenes'}.get(value or 'adultos', 'Adultos')
@@ -144,7 +144,7 @@ class Cell(db.Model):
     waze_url = db.Column(db.Text, nullable=True)
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
-    status = db.Column(db.String(20), default='active') # active, paused, full
+    status = db.Column(db.String(20), default='active') # active, paused
     cell_type = db.Column(db.String(20), default='adultos') # adultos, jovenes, ambos
     has_children_teacher = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -567,38 +567,18 @@ def change_password():
         current = request.form.get('current_password') or ''
         new = request.form.get('new_password') or ''
         confirm = request.form.get('confirm_password') or ''
-        updated = False
-
-        if current_user.role == 'leader':
-            phone_digits = normalize_cr_digits(request.form.get('phone', ''))
-            phone = format_cr_phone(phone_digits) if phone_digits else None
-            if phone_digits and len(phone_digits) != 8:
-                flash('El teléfono debe tener 8 dígitos de Costa Rica.', 'danger')
-                return redirect(url_for('change_password'))
-            if phone != current_user.phone:
-                current_user.phone = phone
-                updated = True
-
-        wants_password_change = bool(current or new or confirm)
-        if wants_password_change:
-            if not current_user.check_password(current):
-                flash('La contraseña actual no coincide.', 'danger')
-                return redirect(url_for('change_password'))
-            if len(new) < 8:
-                flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger')
-                return redirect(url_for('change_password'))
-            if new != confirm:
-                flash('La confirmación no coincide.', 'danger')
-                return redirect(url_for('change_password'))
-            current_user.set_password(new)
-            updated = True
-
-        if updated:
-            db.session.commit()
-            flash('Información de cuenta actualizada correctamente.', 'success')
-        else:
-            flash('No se realizaron cambios.', 'info')
-
+        if not current_user.check_password(current):
+            flash('La contraseña actual no coincide.', 'danger')
+            return redirect(url_for('change_password'))
+        if len(new) < 8:
+            flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger')
+            return redirect(url_for('change_password'))
+        if new != confirm:
+            flash('La confirmación no coincide.', 'danger')
+            return redirect(url_for('change_password'))
+        current_user.set_password(new)
+        db.session.commit()
+        flash('Contraseña actualizada correctamente.', 'success')
         return redirect(url_for('admin_dashboard') if current_user.role in ['admin','mentor'] else url_for('leader_dashboard'))
     return render_template('account/change_password.html')
 
@@ -730,7 +710,12 @@ def fill_cell(c, form):
     c.address = form.get('address','').strip()
     c.day = form.get('day','').strip()
     c.time = form.get('time','').strip()
-    c.status = form.get('status','active')
+    if 'is_active' in form:
+        c.status = 'active' if form.get('is_active') == 'on' else 'paused'
+    else:
+        c.status = form.get('status','active')
+        if c.status not in ['active', 'paused']:
+            c.status = 'paused'
     c.cell_type = form.get('cell_type','adultos') or 'adultos'
     c.has_children_teacher = form.get('has_children_teacher') == 'on'
     # Teléfono y descripción permanecen en base por compatibilidad, pero ya no se usan en la UI.
@@ -749,6 +734,18 @@ def fill_cell(c, form):
         c.google_maps_url = c.google_maps_url or maps_url(c.latitude, c.longitude)
         c.waze_url = c.waze_url or waze_url(c.latitude, c.longitude)
 
+
+@app.route('/admin/cells/<int:cell_id>/toggle-status', methods=['POST'])
+@login_required
+@manager_required
+def admin_cell_toggle_status(cell_id):
+    c = Cell.query.get_or_404(cell_id)
+    if not can_manage_cell(c):
+        abort(403)
+    c.status = 'active' if request.form.get('is_active') == 'on' else 'paused'
+    db.session.commit()
+    flash('Estado de célula actualizado.', 'success')
+    return redirect(request.referrer or url_for('admin_cells'))
 
 @app.route('/admin/sectors/<path:sector>/credentials', methods=['POST'])
 @login_required
@@ -1173,39 +1170,23 @@ def admin_event_delete(event_id):
 @login_required
 @leader_required
 def leader_dashboard():
-    if current_user.role in ['admin','mentor']:
-        return redirect(url_for('admin_dashboard'))
-    cells = Cell.query.filter_by(leader_id=current_user.id).order_by(Cell.name.asc()).all() if current_user.role == 'leader' else []
+    c = Cell.query.filter_by(leader_id=current_user.id).first() if current_user.role=='leader' else None
+    if current_user.role in ['admin','mentor']: return redirect(url_for('admin_dashboard'))
     mentor = get_mentor(current_user)
-    return render_template('leader/dashboard.html', cells=cells, cell=(cells[0] if cells else None), mentor=mentor)
+    return render_template('leader/dashboard.html', cell=c, mentor=mentor)
 
 @app.route('/leader/cell/update', methods=['POST'])
 @login_required
 @leader_required
-def leader_cell_update_legacy():
+def leader_cell_update():
     c = Cell.query.filter_by(leader_id=current_user.id).first_or_404()
-    return _leader_update_cell(c)
-
-@app.route('/leader/cells/<int:cell_id>/update', methods=['POST'])
-@login_required
-@leader_required
-def leader_cell_update(cell_id):
-    c = Cell.query.filter_by(id=cell_id, leader_id=current_user.id).first_or_404()
-    return _leader_update_cell(c)
-
-def _leader_update_cell(c):
-    allowed = ['name','address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type']
+    allowed = ['address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type']
     for k in allowed:
         if k in request.form:
             val = request.form.get(k)
             if k in ['latitude','longitude']:
                 setattr(c,k,float(val) if val else None)
-            elif k == 'name':
-                clean_name = (val or '').strip()
-                if clean_name:
-                    c.name = clean_name
-            else:
-                setattr(c,k,(val or '').strip())
+            else: setattr(c,k,val.strip())
     c.has_children_teacher = request.form.get('has_children_teacher') == 'on'
     if c.latitude is not None and c.longitude is not None:
         c.google_maps_url = maps_url(c.latitude,c.longitude); c.waze_url = waze_url(c.latitude,c.longitude)

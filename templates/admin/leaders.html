@@ -33,7 +33,7 @@
       <label>Nombre<input name="name" required data-label="Nombre" autocomplete="name" placeholder="Ej. Felipe Pérez"></label>
       <label>Usuario<input name="username" data-label="Usuario" data-format="username" autocomplete="username" placeholder="Ej. felipe.perez"></label>
       <label>Correo (opcional)<input name="email" type="email" data-label="Correo" autocomplete="email" placeholder="Ej. felipe@correo.com"></label>
-      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="14" placeholder="Ej. 8888-8888"><span class="hint">Este será el número de contacto del líder. Si cambia, se puede actualizar después.</span></label>
+      <label>Teléfono<input name="phone" data-label="Teléfono" data-format="phone-cr" inputmode="numeric" autocomplete="tel" maxlength="14" placeholder="Ej. 8888-8888"></label>
       {% if current_user.role == 'admin' %}
       <label>Mentor asignado
         <select name="mentor_id" id="mentorSelect">

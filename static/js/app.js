@@ -19,15 +19,10 @@ qsa('.smart-form').forEach(form=>{form.setAttribute('novalidate','');form.addEve
   if(bad.length){e.preventDefault();toast('Revisá los campos marcados antes de continuar.','danger');bad[0].focus({preventScroll:true});bad[0].scrollIntoView({behavior:'smooth',block:'center'})}
 });});
 function updateOtherBarrio(){const s=qs('#barrioSelect'), w=qs('#otherBarrioWrap'); if(!s||!w)return; w.classList.toggle('hidden',s.value!=='Otro')} qs('#barrioSelect')?.addEventListener('change',updateOtherBarrio); updateOtherBarrio();
-let activeLocationScope = document;
-function locationScopeFrom(el){return el?.closest?.('[data-location-scope]') || document;}
-function setLocationInputs(lat,lng,scope=activeLocationScope||document){const maps=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;const waze=`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`; if(qs('#latInput',scope))qs('#latInput',scope).value=lat; if(qs('#lngInput',scope))qs('#lngInput',scope).value=lng; if(qs('#mapsInput',scope))qs('#mapsInput',scope).value=maps; if(qs('#wazeInput',scope))qs('#wazeInput',scope).value=waze;}
+function setLocationInputs(lat,lng){const maps=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;const waze=`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`; if(qs('#latInput'))qs('#latInput').value=lat; if(qs('#lngInput'))qs('#lngInput').value=lng; if(qs('#mapsInput'))qs('#mapsInput').value=maps; if(qs('#wazeInput'))qs('#wazeInput').value=waze;}
 function getPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error('Este navegador no soporta ubicación.')); navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),err=>{let m='No se pudo obtener la ubicación.'; if(err.code===1)m='Permiso de ubicación denegado.'; if(err.code===2)m='La ubicación no está disponible.'; if(err.code===3)m='La solicitud de ubicación tardó demasiado.'; reject(new Error(m))},{enableHighAccuracy:true,timeout:12000,maximumAge:0})})}
-async function useLocation(btn, save=false){const original=btn.innerHTML;const scope=locationScopeFrom(btn);activeLocationScope=scope;try{btn.disabled=true;btn.innerHTML='<span class="icon location"></span>Obteniendo ubicación...';const c=await getPosition();const lat=c.latitude.toFixed(7), lng=c.longitude.toFixed(7);setLocationInputs(lat,lng,scope); if(save){const id=btn.dataset.cellId;const r=await fetch(`/api/cells/${id}/location`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({latitude:c.latitude,longitude:c.longitude})});const data=await r.json();if(!data.ok)throw new Error(data.message);toast('Ubicación guardada correctamente.')}else{toast('Ubicación cargada en el formulario. Guardá los cambios.')}}catch(e){toast(e.message||'No se pudo obtener la ubicación.','danger')}finally{btn.disabled=false;btn.innerHTML=original}}
-qs('#useLocation')?.addEventListener('click',e=>useLocation(e.currentTarget,false));
-qs('#saveLeaderLocation')?.addEventListener('click',e=>useLocation(e.currentTarget,true));
-qsa('[data-use-location]').forEach(btn=>btn.addEventListener('click',e=>useLocation(e.currentTarget,false)));
-qsa('[data-save-location]').forEach(btn=>btn.addEventListener('click',e=>useLocation(e.currentTarget,true)));
+async function useLocation(btn, save=false){const original=btn.innerHTML;try{btn.disabled=true;btn.innerHTML='<span class="icon location"></span>Obteniendo ubicación...';const c=await getPosition();const lat=c.latitude.toFixed(7), lng=c.longitude.toFixed(7);setLocationInputs(lat,lng); if(save){const id=btn.dataset.cellId;const r=await fetch(`/api/cells/${id}/location`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({latitude:c.latitude,longitude:c.longitude})});const data=await r.json();if(!data.ok)throw new Error(data.message);toast('Ubicación guardada correctamente.')}else{toast('Ubicación cargada en el formulario. Guardá los cambios.')}}catch(e){toast(e.message||'No se pudo obtener la ubicación.','danger')}finally{btn.disabled=false;btn.innerHTML=original}}
+qs('#useLocation')?.addEventListener('click',e=>useLocation(e.currentTarget,false)); qs('#saveLeaderLocation')?.addEventListener('click',e=>useLocation(e.currentTarget,true));
 qs('#nearBtn')?.addEventListener('click',async e=>{const btn=e.currentTarget,status=qs('#nearStatus'),res=qs('#nearResults'),normal=qs('#normalResults');const original=btn.innerHTML;try{btn.disabled=true;btn.innerHTML='<span class="icon location"></span>Detectando ubicación...';if(status)status.textContent='Solicitando permiso de ubicación...';const c=await getPosition();if(status)status.textContent='Buscando células cercanas...';const r=await fetch(`/api/nearby?lat=${c.latitude}&lng=${c.longitude}`);const data=await r.json();if(!data.ok)throw new Error(data.message);if(normal)normal.style.display='none';if(res){res.innerHTML=data.cells.length?data.cells.map(x=>`<article class="card cell-card"><div class="card-top"><div class="cell-main"><h3>${esc(x.name)}</h3><p class="cell-barrio">${esc(x.barrio)}</p></div><span class="pill status-pill"><span class="status-dot"></span>${esc(x.day)} · ${esc(x.time)}</span></div><p class="distance-line"><span class="icon location"></span>${esc(x.distance_label)} de tu ubicación</p><p class="cell-description">${esc(x.description||'Célula disponible para integrarte.')}</p><div class="meta cell-meta"><span><i class="icon user"></i>${esc(x.leader)}</span><span><i class="icon location"></i>${esc(x.address)}</span></div><div class="card-actions">${x.maps?`<a class="btn small ghost" target="_blank" rel="noopener" href="${esc(x.maps)}"><span class="icon map"></span>Maps</a>`:''}${x.waze?`<a class="btn small ghost" target="_blank" rel="noopener" href="${esc(x.waze)}"><span class="icon location"></span>Waze</a>`:''}${x.whatsapp_url?`<a class="btn small primary contact-btn" target="_blank" rel="noopener" href="${esc(x.whatsapp_url)}"><span class="icon chat"></span>Contactar</a>`:''}</div></article>`).join(''):'<div class="empty">Aún no hay células con ubicación exacta.</div>';}if(status)status.innerHTML=`<span class="distance-badge"><span class="icon location"></span>Resultados ordenados por cercanía</span>`}catch(err){toast(err.message||'No se pudo buscar cerca de vos.','danger');if(status)status.textContent='Podés buscar por barrio manualmente.'}finally{btn.disabled=false;btn.innerHTML=original}});
 
 function openConfirmModal(title,message,onConfirm,opts={}){
@@ -47,10 +42,9 @@ qsa('form[data-confirm]').forEach(form=>{form.addEventListener('submit',e=>{if(f
 
 
 // Extract coordinates from a pasted Google Maps link, including shared links from WhatsApp.
-async function resolveMapsFromButton(btn){
-  const scope=locationScopeFrom(btn);
-  activeLocationScope=scope;
-  const input=qs('#mapsInput',scope);
+qs('#resolveMapsBtn')?.addEventListener('click', async (e)=>{
+  const btn=e.currentTarget;
+  const input=qs('#mapsInput');
   const raw=(input?.value||'').trim();
   const original=btn.innerHTML;
   if(!raw){toast('Pegá primero el link de Google Maps.','danger'); input?.focus(); return;}
@@ -60,9 +54,9 @@ async function resolveMapsFromButton(btn){
     const r=await fetch('/api/resolve-maps-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:raw})});
     const data=await r.json();
     if(!data.ok) throw new Error(data.message||'No se pudo extraer la ubicación.');
-    setLocationInputs(String(data.latitude), String(data.longitude), scope);
-    if(qs('#mapsInput',scope)) qs('#mapsInput',scope).value = data.maps || raw;
-    if(qs('#wazeInput',scope)) qs('#wazeInput',scope).value = data.waze || '';
+    setLocationInputs(String(data.latitude), String(data.longitude));
+    if(qs('#mapsInput')) qs('#mapsInput').value = data.maps || raw;
+    if(qs('#wazeInput')) qs('#wazeInput').value = data.waze || '';
     toast(data.message || 'Ubicación extraída del link. Guardá los cambios.','success');
   }catch(err){
     toast(err.message || 'No se pudo extraer la ubicación del link.','danger');
@@ -70,20 +64,17 @@ async function resolveMapsFromButton(btn){
     btn.disabled=false;
     btn.innerHTML=original;
   }
-}
-qs('#resolveMapsBtn')?.addEventListener('click', e=>resolveMapsFromButton(e.currentTarget));
-qsa('[data-resolve-maps]').forEach(btn=>btn.addEventListener('click', e=>resolveMapsFromButton(e.currentTarget)));
+});
 
 // Map picker: manually point the cell location on a map.
 (function(){
   const openBtn = qs('#openMapPicker');
-  const openBtns = [...qsa('[data-open-map-picker]')];
   const modal = qs('#mapPickerModal');
   const closeBtn = qs('#closeMapPicker');
   const confirmBtn = qs('#confirmMapPicker');
   const pickedText = qs('#mapPickedText');
   const mapEl = qs('#mapPicker');
-  if((!openBtn && !openBtns.length) || !modal || !mapEl) return;
+  if(!openBtn || !modal || !mapEl) return;
 
   let map = null;
   let marker = null;
@@ -91,8 +82,8 @@ qsa('[data-resolve-maps]').forEach(btn=>btn.addEventListener('click', e=>resolve
   const LIBERIA_CENTER = [10.6350, -85.4377];
 
   function readCurrentCenter(){
-    const lat = parseFloat(qs('#latInput',activeLocationScope)?.value);
-    const lng = parseFloat(qs('#lngInput',activeLocationScope)?.value);
+    const lat = parseFloat(qs('#latInput')?.value);
+    const lng = parseFloat(qs('#lngInput')?.value);
     if(Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
     return LIBERIA_CENTER;
   }
@@ -148,7 +139,7 @@ qsa('[data-resolve-maps]').forEach(btn=>btn.addEventListener('click', e=>resolve
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modal.classList.contains('show')) closeMap(); });
   confirmBtn?.addEventListener('click', ()=>{
     if(!picked) return;
-    setLocationInputs(picked.lat.toFixed(7), picked.lng.toFixed(7), activeLocationScope);
+    setLocationInputs(picked.lat.toFixed(7), picked.lng.toFixed(7));
     toast('Punto del mapa cargado. Guardá los cambios para aplicarlo.','success');
     closeMap();
   });

@@ -654,14 +654,15 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
   min-width:130px;
 }
 
-/* Read-only location fields */
-.form input[readonly], .form textarea[readonly]{
-  background: var(--card-soft);
-  color: var(--muted);
-  border-color: var(--line);
-  cursor: not-allowed;
-}
-.form input[readonly]:focus, .form textarea[readonly]:focus{
-  box-shadow: none;
-  border-color: var(--line);
-}
+/* Estado de células como switch */
+.inline-status-form{display:inline-flex;align-items:center;gap:10px;margin:0;white-space:nowrap;}
+.inline-status-form small{font-size:12px;font-weight:950;color:var(--muted);min-width:54px;}
+.inline-status-form .switch{min-width:50px;}
+.inline-status-form .switch span{width:48px;height:28px;}
+.inline-status-form .switch span:before{width:22px;height:22px;}
+.inline-status-form .switch input:checked+span:before{transform:translateX(20px);}
+.status-toggle-row{grid-column:1/-1;}
+.status-toggle-row .switch input:checked+span{background:linear-gradient(135deg,#12b76a,#32d583);}
+.status-switch input:checked+span{background:linear-gradient(135deg,#12b76a,#32d583);}
+.status-chip.full{background:var(--warning-soft);border-color:#fedf89;color:#b54708;}
+@media(max-width:900px){.inline-status-form{justify-content:flex-start}.inline-status-form small{min-width:auto}}

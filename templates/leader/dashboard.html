@@ -1,90 +1,15 @@
 {% extends 'base.html' %}{% block content %}
-<section class="dash-head shell fade-up">
-  <div>
-    <p class="eyebrow">Panel de líder</p>
-    <h1>{% if cells|length > 1 %}Mis células{% else %}Mi célula{% endif %}</h1>
-    <p>Actualizá horario, tipo y ubicación desde el lugar real donde se reúne cada célula.</p>
-  </div>
-  <a class="btn ghost" href="{{ url_for('change_password') }}"><span class="icon user"></span>Mi cuenta</a>
-</section>
-
-<div class="panel shell mentor-info fade-up delay-1">
-  <h3>Mi contacto</h3>
-  <p><b>Teléfono:</b> {{ current_user.phone or 'No registrado' }}</p>
-  <p>Este número se usa para que las personas puedan contactar al líder por WhatsApp.</p>
-  <a class="btn soft small" href="{{ url_for('change_password') }}"><span class="icon edit"></span>Actualizar teléfono</a>
-</div>
-
-{% if mentor %}
-<div class="panel shell mentor-info fade-up delay-1">
-  <h3>Mentor asignado</h3>
-  <p><b>{{ mentor.name }}</b>{% if mentor.sector %} · {{ mentor.sector }}{% endif %}</p>
-  <p>{% if mentor.phone %}Contacto: {{ mentor.phone }}{% else %}Contacto pendiente{% endif %}</p>
-</div>
-{% else %}
-<div class="panel shell mentor-info fade-up delay-1">
-  <h3>Mentor asignado</h3>
-  <p>No tenés un mentor asignado todavía.</p>
-</div>
-{% endif %}
-
-{% if not cells %}
-<div class="empty shell">Aún no tenés una célula asignada.</div>
-{% else %}
-<div class="shell leader-cells-summary fade-up delay-1">
-  <span class="distance-badge"><span class="icon grid"></span>{{ cells|length }} célula{% if cells|length != 1 %}s{% endif %} asignada{% if cells|length != 1 %}s{% endif %}</span>
-</div>
-
-{% for cell in cells %}
-<div class="panel shell fade-up delay-{{ loop.index if loop.index < 4 else 3 }} leader-cell-panel" data-location-scope>
+<section class="dash-head shell fade-up"><div><p class="eyebrow">Panel de líder</p><h1>Mi célula</h1><p>Actualizá horario, tipo y ubicación desde el lugar real donde se reúne la célula.</p></div></section>
+{% if mentor %}<div class="panel shell mentor-info fade-up delay-1"><h3>Mentor asignado</h3><p><b>{{ mentor.name }}</b>{% if mentor.sector %} · {{ mentor.sector }}{% endif %}</p><p>{% if mentor.phone %}Contacto: {{ mentor.phone }}{% else %}Contacto pendiente{% endif %}</p></div>{% else %}<div class="panel shell mentor-info fade-up delay-1"><h3>Mentor asignado</h3><p>No tenés un mentor asignado todavía.</p></div>{% endif %}
+{% if not cell %}<div class="empty shell">Aún no tenés una célula asignada.</div>{% else %}
+<div class="panel shell fade-up delay-1">
   <div class="location-box">
-    <div>
-      <p class="eyebrow">Célula {{ loop.index }}</p>
-      <h2>{{cell.name}}</h2>
-      <p>{{ display_barrio(cell) }} · {{ cell.day }} {{ fmt_time(cell.time) }}</p>
-      {% if not cell.latitude %}
-      <p class="warning-text">Esta célula aún no tiene ubicación exacta.</p>
-      {% else %}
-      <p><span class="distance-badge"><span class="icon location"></span>Ubicación configurada</span></p>
-      {% endif %}
-    </div>
-    <div class="location-actions">
-      <button class="btn primary" type="button" data-save-location data-cell-id="{{cell.id}}"><span class="icon location"></span>Usar mi ubicación actual</button>
-      <button type="button" class="btn ghost" data-open-map-picker><span class="icon map"></span>Señalar en mapa</button>
-    </div>
+    <div><h2>{{cell.name}}</h2><p>{{ display_barrio(cell) }} · {{ cell.day }} {{ fmt_time(cell.time) }}</p>{% if not cell.latitude %}<p class="warning-text">Esta célula aún no tiene ubicación exacta.</p>{% else %}<p><span class="distance-badge"><span class="icon location"></span>Ubicación configurada</span></p>{% endif %}</div>
+    <div class="location-actions"><button class="btn primary" id="saveLeaderLocation" data-cell-id="{{cell.id}}"><span class="icon location"></span>Usar mi ubicación actual</button><button type="button" class="btn ghost" id="openMapPicker"><span class="icon map"></span>Señalar en mapa</button></div>
   </div>
-
-  <form method="post" action="{{ url_for('leader_cell_update', cell_id=cell.id) }}" class="form smart-form" novalidate>
-    <div class="form-section">
-      <div><h3>Nombre, horario y tipo</h3><p>Actualizá el nombre visible de la célula, el horario y datos importantes para administración.</p></div>
-      <label>Nombre de la célula<input name="name" value="{{ cell.name or '' }}" required data-label="Nombre de la célula" placeholder="Ej. Célula | Moracia"></label>
-      <div class="grid two">
-        <label>Día<select name="day">{% for d in DAYS %}<option value="{{d}}" {% if cell.day==d %}selected{% endif %}>{{d}}</option>{% endfor %}</select></label>
-        <label>Hora<select name="time">{% for h in HOURS %}<option value="{{h}}" {% if cell.time==h or fmt_time(cell.time)==h %}selected{% endif %}>{{h}}</option>{% endfor %}</select></label>
-        <label>Tipo de célula<select name="cell_type">{% for value,label in CELL_TYPES %}<option value="{{value}}" {% if cell.cell_type==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>
-        <label class="check-card"><input type="checkbox" name="has_children_teacher" {% if cell.has_children_teacher %}checked{% endif %}><span>Cuenta con maestra de niños</span></label>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div><h3>Ubicación</h3><p>Estos datos ayudan a que la persona llegue correctamente.</p></div>
-      <label>Dirección<textarea name="address" required data-label="Dirección">{{cell.address}}</textarea></label>
-      <div class="grid two">
-        <label>Google Maps
-          <div class="input-action">
-            <input id="mapsInput" name="google_maps_url" value="{{cell.google_maps_url or ''}}" placeholder="Pegá el link de Google Maps">
-            <button type="button" class="btn mini soft" data-resolve-maps title="Extraer ubicación del link"><span class="icon location"></span>Localizar</button>
-          </div>
-          <span class="hint">Pegá aquí el link que te compartan por WhatsApp y presioná Localizar.</span>
-        </label>
-        <label>Waze <span class="hint">automático</span><input id="wazeInput" name="waze_url" value="{{cell.waze_url or ''}}" placeholder="Se genera automáticamente" readonly aria-readonly="true"></label>
-        <label>Latitud <span class="hint">automática</span><input id="latInput" name="latitude" value="{{cell.latitude or ''}}" placeholder="Se llena al ubicar la célula" readonly aria-readonly="true"></label>
-        <label>Longitud <span class="hint">automática</span><input id="lngInput" name="longitude" value="{{cell.longitude or ''}}" placeholder="Se llena al ubicar la célula" readonly aria-readonly="true"></label>
-      </div>
-    </div>
-    <button class="btn primary full">Guardar cambios de esta célula</button>
+  <form method="post" action="{{ url_for('leader_cell_update') }}" class="form smart-form" novalidate>
+    <div class="form-section"><div><h3>Horario y tipo</h3><p>Día, hora y datos importantes visibles para administración.</p></div><div class="grid two"><label>Día<select name="day">{% for d in DAYS %}<option value="{{d}}" {% if cell.day==d %}selected{% endif %}>{{d}}</option>{% endfor %}</select></label><label>Hora<select name="time">{% for h in HOURS %}<option value="{{h}}" {% if cell.time==h or fmt_time(cell.time)==h %}selected{% endif %}>{{h}}</option>{% endfor %}</select></label><label>Tipo de célula<select name="cell_type">{% for value,label in CELL_TYPES %}<option value="{{value}}" {% if cell.cell_type==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label><label class="check-card"><input type="checkbox" name="has_children_teacher" {% if cell.has_children_teacher %}checked{% endif %}><span>Cuenta con maestra de niños</span></label></div></div>
+    <div class="form-section"><div><h3>Ubicación</h3><p>Estos datos ayudan a que la persona llegue correctamente.</p></div><label>Dirección<textarea name="address" required data-label="Dirección">{{cell.address}}</textarea></label><div class="grid two"><label>Google Maps<div class="input-action"><input id="mapsInput" name="google_maps_url" value="{{cell.google_maps_url or ''}}" placeholder="Pegá el link de Google Maps"><button type="button" class="btn mini soft" id="resolveMapsBtn" title="Extraer ubicación del link"><span class="icon location"></span>Localizar</button></div><span class="hint">Pegá aquí el link que te compartan por WhatsApp y presioná Localizar.</span></label><label>Waze<input id="wazeInput" name="waze_url" value="{{cell.waze_url or ''}}"></label><label>Latitud<input id="latInput" name="latitude" value="{{cell.latitude or ''}}"></label><label>Longitud<input id="lngInput" name="longitude" value="{{cell.longitude or ''}}"></label></div></div>
+    <button class="btn primary full">Guardar cambios</button>
   </form>
-</div>
-{% endfor %}
-{% endif %}
-{% endblock %}
+</div>{% endif %}{% endblock %}
