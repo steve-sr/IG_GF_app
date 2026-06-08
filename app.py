@@ -567,18 +567,38 @@ def change_password():
         current = request.form.get('current_password') or ''
         new = request.form.get('new_password') or ''
         confirm = request.form.get('confirm_password') or ''
-        if not current_user.check_password(current):
-            flash('La contraseña actual no coincide.', 'danger')
-            return redirect(url_for('change_password'))
-        if len(new) < 8:
-            flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger')
-            return redirect(url_for('change_password'))
-        if new != confirm:
-            flash('La confirmación no coincide.', 'danger')
-            return redirect(url_for('change_password'))
-        current_user.set_password(new)
-        db.session.commit()
-        flash('Contraseña actualizada correctamente.', 'success')
+        updated = False
+
+        if current_user.role == 'leader':
+            phone_digits = normalize_cr_digits(request.form.get('phone', ''))
+            phone = format_cr_phone(phone_digits) if phone_digits else None
+            if phone_digits and len(phone_digits) != 8:
+                flash('El teléfono debe tener 8 dígitos de Costa Rica.', 'danger')
+                return redirect(url_for('change_password'))
+            if phone != current_user.phone:
+                current_user.phone = phone
+                updated = True
+
+        wants_password_change = bool(current or new or confirm)
+        if wants_password_change:
+            if not current_user.check_password(current):
+                flash('La contraseña actual no coincide.', 'danger')
+                return redirect(url_for('change_password'))
+            if len(new) < 8:
+                flash('La nueva contraseña debe tener al menos 8 caracteres.', 'danger')
+                return redirect(url_for('change_password'))
+            if new != confirm:
+                flash('La confirmación no coincide.', 'danger')
+                return redirect(url_for('change_password'))
+            current_user.set_password(new)
+            updated = True
+
+        if updated:
+            db.session.commit()
+            flash('Información de cuenta actualizada correctamente.', 'success')
+        else:
+            flash('No se realizaron cambios.', 'info')
+
         return redirect(url_for('admin_dashboard') if current_user.role in ['admin','mentor'] else url_for('leader_dashboard'))
     return render_template('account/change_password.html')
 
@@ -1153,16 +1173,27 @@ def admin_event_delete(event_id):
 @login_required
 @leader_required
 def leader_dashboard():
-    c = Cell.query.filter_by(leader_id=current_user.id).first() if current_user.role=='leader' else None
-    if current_user.role in ['admin','mentor']: return redirect(url_for('admin_dashboard'))
+    if current_user.role in ['admin','mentor']:
+        return redirect(url_for('admin_dashboard'))
+    cells = Cell.query.filter_by(leader_id=current_user.id).order_by(Cell.name.asc()).all() if current_user.role == 'leader' else []
     mentor = get_mentor(current_user)
-    return render_template('leader/dashboard.html', cell=c, mentor=mentor)
+    return render_template('leader/dashboard.html', cells=cells, cell=(cells[0] if cells else None), mentor=mentor)
 
 @app.route('/leader/cell/update', methods=['POST'])
 @login_required
 @leader_required
-def leader_cell_update():
+def leader_cell_update_legacy():
     c = Cell.query.filter_by(leader_id=current_user.id).first_or_404()
+    return _leader_update_cell(c)
+
+@app.route('/leader/cells/<int:cell_id>/update', methods=['POST'])
+@login_required
+@leader_required
+def leader_cell_update(cell_id):
+    c = Cell.query.filter_by(id=cell_id, leader_id=current_user.id).first_or_404()
+    return _leader_update_cell(c)
+
+def _leader_update_cell(c):
     allowed = ['address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type']
     for k in allowed:
         if k in request.form:
