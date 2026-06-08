@@ -653,3 +653,15 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
 .confirm-modal.action-modal .modal-actions .btn.primary{
   min-width:130px;
 }
+
+/* Read-only location fields */
+.form input[readonly], .form textarea[readonly]{
+  background: var(--card-soft);
+  color: var(--muted);
+  border-color: var(--line);
+  cursor: not-allowed;
+}
+.form input[readonly]:focus, .form textarea[readonly]:focus{
+  box-shadow: none;
+  border-color: var(--line);
+}
