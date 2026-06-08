@@ -56,7 +56,8 @@
 
   <form method="post" action="{{ url_for('leader_cell_update', cell_id=cell.id) }}" class="form smart-form" novalidate>
     <div class="form-section">
-      <div><h3>Horario y tipo</h3><p>Día, hora y datos importantes visibles para administración.</p></div>
+      <div><h3>Nombre, horario y tipo</h3><p>Actualizá el nombre visible de la célula, el horario y datos importantes para administración.</p></div>
+      <label>Nombre de la célula<input name="name" value="{{ cell.name or '' }}" required data-label="Nombre de la célula" placeholder="Ej. Célula | Moracia"></label>
       <div class="grid two">
         <label>Día<select name="day">{% for d in DAYS %}<option value="{{d}}" {% if cell.day==d %}selected{% endif %}>{{d}}</option>{% endfor %}</select></label>
         <label>Hora<select name="time">{% for h in HOURS %}<option value="{{h}}" {% if cell.time==h or fmt_time(cell.time)==h %}selected{% endif %}>{{h}}</option>{% endfor %}</select></label>

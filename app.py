@@ -1194,13 +1194,18 @@ def leader_cell_update(cell_id):
     return _leader_update_cell(c)
 
 def _leader_update_cell(c):
-    allowed = ['address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type']
+    allowed = ['name','address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type']
     for k in allowed:
         if k in request.form:
             val = request.form.get(k)
             if k in ['latitude','longitude']:
                 setattr(c,k,float(val) if val else None)
-            else: setattr(c,k,val.strip())
+            elif k == 'name':
+                clean_name = (val or '').strip()
+                if clean_name:
+                    c.name = clean_name
+            else:
+                setattr(c,k,(val or '').strip())
     c.has_children_teacher = request.form.get('has_children_teacher') == 'on'
     if c.latitude is not None and c.longitude is not None:
         c.google_maps_url = maps_url(c.latitude,c.longitude); c.waze_url = waze_url(c.latitude,c.longitude)
