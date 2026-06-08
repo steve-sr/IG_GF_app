@@ -12,10 +12,7 @@
       <label>Hora<select name="time" required data-label="Hora"><option value="">Seleccionar</option>{% for h in HOURS %}<option value="{{h}}" {% if cell and (cell.time==h or fmt_time(cell.time)==h) %}selected{% endif %}>{{h}}</option>{% endfor %}</select></label>
       <label>Tipo de célula<select name="cell_type">{% for value,label in CELL_TYPES %}<option value="{{value}}" {% if cell and cell.cell_type==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>
       <label class="check-card"><input type="checkbox" name="has_children_teacher" {% if cell and cell.has_children_teacher %}checked{% endif %}><span>Cuenta con maestra de niños</span></label>
-      <div class="option-row compact status-toggle-row">
-        <div><strong>Estado de la célula</strong><p>Activá o pausá la célula. Las pausadas no se muestran en la búsqueda pública.</p></div>
-        <label class="switch" aria-label="Célula activa"><input type="checkbox" name="is_active" {% if not cell or cell.status=='active' %}checked{% endif %}><span></span></label>
-      </div>
+      <label>Estado<select name="status"><option value="active" {% if not cell or cell.status=='active' %}selected{% endif %}>Activa</option><option value="paused" {% if cell and cell.status=='paused' %}selected{% endif %}>Pausada</option><option value="full" {% if cell and cell.status=='full' %}selected{% endif %}>Llena</option></select></label>
     </div>
     <label>Dirección<textarea name="address" required data-label="Dirección" placeholder="Dirección visible para visitantes">{{ cell.address if cell else '' }}</textarea></label>
   </div>

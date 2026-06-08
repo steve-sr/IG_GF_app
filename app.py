@@ -88,7 +88,7 @@ def display_barrio(cell):
     return other or barrio or 'Barrio por definir'
 
 def status_label(status):
-    return 'Activa' if status == 'active' else 'Pausada'
+    return {'active':'Activa','paused':'Pausada','full':'Llena'}.get(status or '', 'Pausada')
 
 def cell_type_label(value):
     return {'adultos':'Adultos','jovenes':'Jóvenes','ambos':'Adultos y jóvenes'}.get(value or 'adultos', 'Adultos')
@@ -144,7 +144,7 @@ class Cell(db.Model):
     waze_url = db.Column(db.Text, nullable=True)
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
-    status = db.Column(db.String(20), default='active') # active, paused
+    status = db.Column(db.String(20), default='active') # active, paused, full
     cell_type = db.Column(db.String(20), default='adultos') # adultos, jovenes, ambos
     has_children_teacher = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -710,12 +710,7 @@ def fill_cell(c, form):
     c.address = form.get('address','').strip()
     c.day = form.get('day','').strip()
     c.time = form.get('time','').strip()
-    if 'is_active' in form:
-        c.status = 'active' if form.get('is_active') == 'on' else 'paused'
-    else:
-        c.status = form.get('status','active')
-        if c.status not in ['active', 'paused']:
-            c.status = 'paused'
+    c.status = form.get('status','active')
     c.cell_type = form.get('cell_type','adultos') or 'adultos'
     c.has_children_teacher = form.get('has_children_teacher') == 'on'
     # Teléfono y descripción permanecen en base por compatibilidad, pero ya no se usan en la UI.
@@ -734,18 +729,6 @@ def fill_cell(c, form):
         c.google_maps_url = c.google_maps_url or maps_url(c.latitude, c.longitude)
         c.waze_url = c.waze_url or waze_url(c.latitude, c.longitude)
 
-
-@app.route('/admin/cells/<int:cell_id>/toggle-status', methods=['POST'])
-@login_required
-@manager_required
-def admin_cell_toggle_status(cell_id):
-    c = Cell.query.get_or_404(cell_id)
-    if not can_manage_cell(c):
-        abort(403)
-    c.status = 'active' if request.form.get('is_active') == 'on' else 'paused'
-    db.session.commit()
-    flash('Estado de célula actualizado.', 'success')
-    return redirect(request.referrer or url_for('admin_cells'))
 
 @app.route('/admin/sectors/<path:sector>/credentials', methods=['POST'])
 @login_required
@@ -1170,27 +1153,44 @@ def admin_event_delete(event_id):
 @login_required
 @leader_required
 def leader_dashboard():
-    c = Cell.query.filter_by(leader_id=current_user.id).first() if current_user.role=='leader' else None
-    if current_user.role in ['admin','mentor']: return redirect(url_for('admin_dashboard'))
+    if current_user.role in ['admin','mentor']:
+        return redirect(url_for('admin_dashboard'))
+    cells = Cell.query.filter_by(leader_id=current_user.id).order_by(Cell.created_at.asc()).all()
     mentor = get_mentor(current_user)
-    return render_template('leader/dashboard.html', cell=c, mentor=mentor)
+    return render_template('leader/dashboard.html', cell=(cells[0] if cells else None), cells=cells, mentor=mentor)
 
 @app.route('/leader/cell/update', methods=['POST'])
 @login_required
 @leader_required
 def leader_cell_update():
-    c = Cell.query.filter_by(leader_id=current_user.id).first_or_404()
+    cell_id = request.form.get('cell_id')
+    if cell_id:
+        c = Cell.query.filter_by(id=int(cell_id), leader_id=current_user.id).first_or_404()
+    else:
+        c = Cell.query.filter_by(leader_id=current_user.id).first_or_404()
+
+    if 'name' in request.form:
+        name = safe_text(request.form.get('name'), '').strip()
+        if not name:
+            flash('El nombre de la célula es obligatorio.', 'danger')
+            return redirect(url_for('leader_dashboard'))
+        c.name = name
+
     allowed = ['address','day','time','google_maps_url','waze_url','latitude','longitude','cell_type']
     for k in allowed:
         if k in request.form:
             val = request.form.get(k)
             if k in ['latitude','longitude']:
                 setattr(c,k,float(val) if val else None)
-            else: setattr(c,k,val.strip())
+            else:
+                setattr(c,k,val.strip())
     c.has_children_teacher = request.form.get('has_children_teacher') == 'on'
     if c.latitude is not None and c.longitude is not None:
-        c.google_maps_url = maps_url(c.latitude,c.longitude); c.waze_url = waze_url(c.latitude,c.longitude)
-    db.session.commit(); flash('Información actualizada.', 'success'); return redirect(url_for('leader_dashboard'))
+        c.google_maps_url = maps_url(c.latitude,c.longitude)
+        c.waze_url = waze_url(c.latitude,c.longitude)
+    db.session.commit()
+    flash('Información actualizada.', 'success')
+    return redirect(url_for('leader_dashboard'))
 
 @app.route('/api/resolve-maps-url', methods=['POST'])
 @login_required

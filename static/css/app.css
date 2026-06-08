@@ -654,15 +654,9 @@ a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.
   min-width:130px;
 }
 
-/* Estado de células como switch */
-.inline-status-form{display:inline-flex;align-items:center;gap:10px;margin:0;white-space:nowrap;}
-.inline-status-form small{font-size:12px;font-weight:950;color:var(--muted);min-width:54px;}
-.inline-status-form .switch{min-width:50px;}
-.inline-status-form .switch span{width:48px;height:28px;}
-.inline-status-form .switch span:before{width:22px;height:22px;}
-.inline-status-form .switch input:checked+span:before{transform:translateX(20px);}
-.status-toggle-row{grid-column:1/-1;}
-.status-toggle-row .switch input:checked+span{background:linear-gradient(135deg,#12b76a,#32d583);}
-.status-switch input:checked+span{background:linear-gradient(135deg,#12b76a,#32d583);}
-.status-chip.full{background:var(--warning-soft);border-color:#fedf89;color:#b54708;}
-@media(max-width:900px){.inline-status-form{justify-content:flex-start}.inline-status-form small{min-width:auto}}
+.leader-cells-stack{display:grid;gap:24px;}
+.leader-cell-card{overflow:hidden;}
+.leader-cell-card .location-box{align-items:flex-start;}
+.leader-cell-card .form-section{margin-top:22px;}
+.leader-cell-card input[readonly]{background:rgba(148,163,184,.12);color:var(--muted);cursor:not-allowed;}
+@media(max-width:760px){.leader-cell-card .location-actions{width:100%;display:grid;grid-template-columns:1fr;}.leader-cell-card .btn.full{width:100%;}}

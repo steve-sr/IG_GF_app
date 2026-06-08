@@ -231,3 +231,114 @@ document.querySelectorAll('.panel,.sector-group,.mentor-mini-card,.cell-card,.ta
   el.classList.add('ui-reveal');
   if(revealObserver) revealObserver.observe(el); else el.classList.add('is-visible');
 });
+
+// Leader dashboard: multiple cells, scoped location/map/link actions.
+(function(){
+  const setScopedLocationInputs=(card,lat,lng)=>{
+    const maps=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    const waze=`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+    card?.querySelector('.latInput')&&(card.querySelector('.latInput').value=lat);
+    card?.querySelector('.lngInput')&&(card.querySelector('.lngInput').value=lng);
+    card?.querySelector('.mapsInput')&&(card.querySelector('.mapsInput').value=maps);
+    card?.querySelector('.wazeInput')&&(card.querySelector('.wazeInput').value=waze);
+  };
+
+  document.addEventListener('click', async (e)=>{
+    const btn=e.target.closest('.leader-use-location');
+    if(!btn) return;
+    const card=btn.closest('[data-cell-card]');
+    const original=btn.innerHTML;
+    try{
+      btn.disabled=true;
+      btn.innerHTML='<span class="icon location"></span>Obteniendo ubicación...';
+      const c=await getPosition();
+      const lat=c.latitude.toFixed(7), lng=c.longitude.toFixed(7);
+      setScopedLocationInputs(card,lat,lng);
+      const id=btn.dataset.cellId;
+      const r=await fetch(`/api/cells/${id}/location`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({latitude:c.latitude,longitude:c.longitude})});
+      const data=await r.json();
+      if(!data.ok)throw new Error(data.message||'No se pudo guardar la ubicación.');
+      toast('Ubicación guardada correctamente.','success');
+    }catch(err){
+      toast(err.message||'No se pudo obtener la ubicación.','danger');
+    }finally{
+      btn.disabled=false;
+      btn.innerHTML=original;
+    }
+  });
+
+  document.addEventListener('click', async (e)=>{
+    const btn=e.target.closest('.leader-resolve-maps');
+    if(!btn) return;
+    const card=btn.closest('[data-cell-card]');
+    const input=card?.querySelector('.mapsInput');
+    const raw=(input?.value||'').trim();
+    const original=btn.innerHTML;
+    if(!raw){toast('Pegá primero el link de Google Maps.','danger'); input?.focus(); return;}
+    try{
+      btn.disabled=true;
+      btn.innerHTML='<span class="icon location"></span>Localizando...';
+      const r=await fetch('/api/resolve-maps-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:raw})});
+      const data=await r.json();
+      if(!data.ok) throw new Error(data.message||'No se pudo extraer la ubicación.');
+      setScopedLocationInputs(card,String(data.latitude),String(data.longitude));
+      toast(data.message || 'Ubicación extraída del link. Guardá los cambios.','success');
+    }catch(err){
+      toast(err.message || 'No se pudo extraer la ubicación del link.','danger');
+    }finally{
+      btn.disabled=false;
+      btn.innerHTML=original;
+    }
+  });
+
+  const modal=document.querySelector('#mapPickerModal');
+  const mapEl=document.querySelector('#mapPicker');
+  const closeBtn=document.querySelector('#closeMapPicker');
+  const confirmBtn=document.querySelector('#confirmMapPicker');
+  const pickedText=document.querySelector('#mapPickedText');
+  if(!modal || !mapEl) return;
+  let activeCard=null, map=null, marker=null, picked=null;
+  const LIBERIA_CENTER=[10.6350,-85.4377];
+  const readCenter=()=>{
+    const lat=parseFloat(activeCard?.querySelector('.latInput')?.value);
+    const lng=parseFloat(activeCard?.querySelector('.lngInput')?.value);
+    if(Number.isFinite(lat)&&Number.isFinite(lng)) return [lat,lng];
+    return LIBERIA_CENTER;
+  };
+  const setPicked=(latlng)=>{
+    picked={lat:Number(latlng.lat),lng:Number(latlng.lng)};
+    if(marker) marker.setLatLng(picked); else marker=L.marker(picked).addTo(map);
+    if(confirmBtn) confirmBtn.disabled=false;
+    if(pickedText) pickedText.textContent=`Punto seleccionado: ${picked.lat.toFixed(7)}, ${picked.lng.toFixed(7)}`;
+  };
+  const initMap=()=>{
+    if(!window.L){toast('El mapa aún está cargando. Intentá de nuevo en unos segundos.','warning');return false;}
+    const center=readCenter();
+    if(!map){
+      map=L.map(mapEl,{scrollWheelZoom:true}).setView(center,14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+      map.on('click',e=>setPicked(e.latlng));
+    }else map.setView(center,14);
+    if(Number.isFinite(parseFloat(activeCard?.querySelector('.latInput')?.value))){setPicked({lat:center[0],lng:center[1]});}
+    else{picked=null;if(marker){map.removeLayer(marker);marker=null;} if(confirmBtn)confirmBtn.disabled=true; if(pickedText)pickedText.textContent='Tocá el mapa para seleccionar el punto exacto.';}
+    setTimeout(()=>map.invalidateSize(),120);
+    return true;
+  };
+  document.addEventListener('click',(e)=>{
+    const btn=e.target.closest('.leader-open-map');
+    if(!btn)return;
+    activeCard=btn.closest('[data-cell-card]');
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    initMap();
+  });
+  const close=()=>{modal.classList.remove('show');modal.setAttribute('aria-hidden','true');};
+  closeBtn?.addEventListener('click',close);
+  modal.addEventListener('click',e=>{if(e.target===modal)close();});
+  confirmBtn?.addEventListener('click',()=>{
+    if(!picked || !activeCard)return;
+    setScopedLocationInputs(activeCard,picked.lat.toFixed(7),picked.lng.toFixed(7));
+    toast('Punto del mapa cargado. Guardá los cambios para aplicarlo.','success');
+    close();
+  });
+})();

@@ -28,7 +28,7 @@
   <form method="get" class="filters-grid">
     <label>Buscar<input name="q" value="{{ q or '' }}" placeholder="Célula, líder, barrio..."></label>
     <label>Sector<select name="sector"><option value="">Todos</option>{% for s in SECTORS %}<option value="{{s}}" {% if sector_filter==s %}selected{% endif %}>{{s}}</option>{% endfor %}</select></label>
-    <label>Estado<select name="status"><option value="">Todos</option><option value="active" {% if status_filter=='active' %}selected{% endif %}>Activa</option><option value="paused" {% if status_filter=='paused' %}selected{% endif %}>Pausada</option></select></label>
+    <label>Estado<select name="status"><option value="">Todos</option><option value="active" {% if status_filter=='active' %}selected{% endif %}>Activa</option><option value="paused" {% if status_filter=='paused' %}selected{% endif %}>Pausada</option><option value="full" {% if status_filter=='full' %}selected{% endif %}>Llena</option></select></label>
     <label>Tipo<select name="cell_type"><option value="">Todos</option>{% for value,label in CELL_TYPES %}<option value="{{value}}" {% if type_filter==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>
     <label>Ordenar<select name="sort"><option value="sector" {% if sort=='sector' %}selected{% endif %}>Sector</option><option value="name" {% if sort=='name' %}selected{% endif %}>Nombre</option><option value="leader" {% if sort=='leader' %}selected{% endif %}>Líder</option><option value="barrio" {% if sort=='barrio' %}selected{% endif %}>Barrio</option><option value="status" {% if sort=='status' %}selected{% endif %}>Estado</option><option value="type" {% if sort=='type' %}selected{% endif %}>Tipo</option></select></label>
     <label>Dirección<select name="dir"><option value="asc" {% if direction=='asc' %}selected{% endif %}>Ascendente</option><option value="desc" {% if direction=='desc' %}selected{% endif %}>Descendente</option></select></label>
@@ -55,15 +55,7 @@
             <td><span class="mini-pill">{{ cell_type_label(c.cell_type) }}</span>{% if c.has_children_teacher %}<span class="mini-pill soft-green">Niños</span>{% endif %}</td>
             <td>{{ c.day }} · {{ fmt_time(c.time) }}</td>
             <td>{{c.leader.name if c.leader else '—'}}</td>
-            <td>
-              <form method="post" action="{{ url_for('admin_cell_toggle_status', cell_id=c.id) }}" class="inline-status-form">
-                <label class="switch status-switch" title="Cambiar estado">
-                  <input type="checkbox" name="is_active" {% if c.status == 'active' %}checked{% endif %} onchange="this.form.submit()">
-                  <span></span>
-                </label>
-                <small>{{ 'Activa' if c.status == 'active' else 'Pausada' }}</small>
-              </form>
-            </td>
+            <td><span class="status-chip {{ c.status }}">{{ status_label(c.status) }}</span></td>
             <td>{% if c.latitude %}<span class="distance-badge"><span class="icon location"></span>Lista</span>{% else %}<span class="pill">Pendiente</span>{% endif %}</td>
             <td>
               <div class="row-actions">
