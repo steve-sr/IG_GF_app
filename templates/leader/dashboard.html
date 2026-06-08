@@ -56,19 +56,11 @@
       <span class="hint">Este nombre será visible en la búsqueda pública.</span>
     </div>
     <div class="form-section"><div><h3>Horario y detalles</h3><p>Estos datos ayudan a ubicar mejor la célula.</p></div><div class="grid two"><label>Día<select name="day">{% for d in DAYS %}<option value="{{d}}" {% if cell.day==d %}selected{% endif %}>{{d}}</option>{% endfor %}</select></label><label>Hora<select name="time">{% for h in HOURS %}<option value="{{h}}" {% if cell.time==h or fmt_time(cell.time)==h %}selected{% endif %}>{{h}}</option>{% endfor %}</select></label><label>Tipo de célula<select name="cell_type">{% for value,label in CELL_TYPES %}<option value="{{value}}" {% if cell.cell_type==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label><label class="check-card"><input type="checkbox" name="has_children_teacher" {% if cell.has_children_teacher %}checked{% endif %}><span>Cuenta con maestra de niños</span></label></div></div>
-    <div class="form-section"><div><h3>Ubicación</h3><p>Podés usar tu ubicación actual, señalar en el mapa o pegar un link de Google Maps.</p></div><label>Dirección<textarea name="address" required data-label="Dirección">{{cell.address}}</textarea></label><div class="grid two"><label>Google Maps<div class="input-action maps-action-row"><input class="mapsInput" name="google_maps_url" value="{{cell.google_maps_url or ''}}" placeholder="Pegá el link de Google Maps"><button type="button" class="btn mini soft leader-resolve-maps" title="Extraer ubicación del link"><span class="icon location"></span>Localizar</button><button type="button" class="btn mini ghost leader-open-map" title="Señalar ubicación en mapa"><span class="icon map"></span>Mapa</button></div><span class="hint">Pegá el link que te compartan por WhatsApp, o señalá el punto exacto en el mapa.</span></label><label>Waze<input class="wazeInput" name="waze_url" value="{{cell.waze_url or ''}}" readonly></label><label>Latitud<input class="latInput" name="latitude" value="{{cell.latitude or ''}}" readonly></label><label>Longitud<input class="lngInput" name="longitude" value="{{cell.longitude or ''}}" readonly></label></div></div>
+    <div class="form-section"><div><h3>Ubicación</h3><p>Podés usar tu ubicación actual o pegar un link de Google Maps.</p></div><label>Dirección<textarea name="address" required data-label="Dirección">{{cell.address}}</textarea></label><div class="grid two"><label>Google Maps<div class="input-action maps-action-row"><input class="mapsInput" name="google_maps_url" value="{{cell.google_maps_url or ''}}" placeholder="Pegá el link de Google Maps"><button type="button" class="btn mini soft leader-resolve-maps" title="Extraer ubicación del link"><span class="icon location"></span>Localizar</button></div><span class="hint">Pegá el link que te compartan por WhatsApp y presioná Localizar.</span></label><label>Waze<input class="wazeInput" name="waze_url" value="{{cell.waze_url or ''}}" readonly></label><label>Latitud<input class="latInput" name="latitude" value="{{cell.latitude or ''}}" readonly></label><label>Longitud<input class="lngInput" name="longitude" value="{{cell.longitude or ''}}" readonly></label></div></div>
     <button class="btn primary full"><span class="icon save"></span>Guardar cambios</button>
   </form>
 </div>
 {% endfor %}
 </div>
 
-<div class="map-modal" id="mapPickerModal" aria-hidden="true">
-  <div class="map-modal-card">
-    <div class="map-modal-head"><div><p class="eyebrow">Ubicación</p><h3>Señalar en mapa</h3></div><button type="button" class="btn mini ghost" id="closeMapPicker">Cerrar</button></div>
-    <div id="mapPicker" class="map-picker"></div>
-    <p id="mapPickedText" class="hint">Tocá el mapa para seleccionar el punto exacto.</p>
-    <button type="button" class="btn primary full" id="confirmMapPicker" disabled>Usar este punto</button>
-  </div>
-</div>
 {% endif %}{% endblock %}
